@@ -1,144 +1,175 @@
 
-<h2 class="sr-only">畑AIアドバイザー v2 — GPS天気連携・畑マップ・会話形式診断</h2>
+<h2 class="sr-only">畑AIアドバイザー v2 — 場所を手動入力して天気取得</h2>
 <style>
-#app { padding: 1.5rem 0; }
-.tab-bar { display:flex; gap:4px; margin-bottom:1.5rem; background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:4px; }
-.tab-btn { flex:1; padding:8px; border:none; border-radius:6px; font-size:13px; cursor:pointer; background:transparent; color:var(--color-text-secondary); font-weight:400; transition:all 0.15s; }
-.tab-btn.active { background:var(--color-background-primary); color:var(--color-text-primary); font-weight:500; border:0.5px solid var(--color-border-tertiary); }
-.tab-content { display:none; }
-.tab-content.active { display:block; }
-.card { background:var(--color-background-secondary); border-radius:var(--border-radius-lg); padding:1rem 1.25rem; margin-bottom:1rem; }
-.label { font-size:12px; color:var(--color-text-secondary); margin-bottom:6px; }
-.weather-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
-.weather-card { background:var(--color-background-primary); border-radius:var(--border-radius-md); padding:10px; text-align:center; border:0.5px solid var(--color-border-tertiary); }
-.weather-val { font-size:20px; font-weight:500; color:var(--color-text-primary); }
-.weather-lbl { font-size:11px; color:var(--color-text-secondary); margin-top:2px; }
-#map-grid { display:grid; gap:4px; margin-top:12px; }
-.cell { border-radius:6px; border:1.5px dashed var(--color-border-secondary); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--color-text-secondary); transition:all 0.15s; min-height:52px; user-select:none; }
-.cell:hover { border-color:var(--color-border-primary); background:var(--color-background-secondary); }
-.cell.planted { border-style:solid; }
-.chat-area { height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding:4px 0; margin-bottom:12px; }
-.msg { max-width:85%; padding:10px 14px; border-radius:12px; font-size:14px; line-height:1.6; }
-.msg.user { align-self:flex-end; background:var(--color-background-info); color:var(--color-text-primary); border-radius:12px 12px 2px 12px; }
-.msg.ai { align-self:flex-start; background:var(--color-background-secondary); color:var(--color-text-primary); border-radius:12px 12px 12px 2px; border:0.5px solid var(--color-border-tertiary); }
-.msg.ai.loading { color:var(--color-text-secondary); }
-.chat-input-row { display:flex; gap:8px; }
-.chat-input-row input { flex:1; font-size:14px; }
-.chat-input-row button { padding:8px 16px; font-size:14px; border-radius:var(--border-radius-md); cursor:pointer; border:0.5px solid var(--color-border-secondary); background:var(--color-background-primary); color:var(--color-text-primary); white-space:nowrap; }
-.quick-btns { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
-.quick-btn { font-size:12px; padding:5px 10px; border-radius:20px; border:0.5px solid var(--color-border-secondary); background:var(--color-background-primary); color:var(--color-text-secondary); cursor:pointer; }
-.quick-btn:hover { border-color:var(--color-border-primary); color:var(--color-text-primary); }
-#crop-picker { display:none; position:absolute; background:var(--color-background-primary); border:0.5px solid var(--color-border-primary); border-radius:var(--border-radius-md); padding:8px; z-index:10; box-shadow:none; max-width:240px; }
-.crop-option { padding:6px 10px; cursor:pointer; border-radius:6px; font-size:13px; display:flex; align-items:center; gap:8px; }
-.crop-option:hover { background:var(--color-background-secondary); }
+*{box-sizing:border-box;margin:0;padding:0}
+#app{padding:1rem 0;max-width:380px}
+.screen{display:none}
+.screen.active{display:block}
+.tab-bar{display:flex;gap:4px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:4px;margin-bottom:1.5rem}
+.tab{flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:12px;cursor:pointer;background:transparent;color:var(--color-text-secondary);font-weight:400;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all 0.15s}
+.tab i{font-size:18px}
+.tab.active{background:var(--color-background-primary);color:var(--color-text-primary);font-weight:500;border:0.5px solid var(--color-border-tertiary)}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:1rem}
+.lbl{font-size:12px;color:var(--color-text-secondary);margin-bottom:6px}
+.weather-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.wcard{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px;text-align:center}
+.wval{font-size:22px;font-weight:500;color:var(--color-text-primary)}
+.wlbl{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.primary-btn{width:100%;padding:12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-primary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:14px;cursor:pointer;font-weight:500}
+.primary-btn:hover{background:var(--color-background-secondary)}
+.primary-btn:disabled{opacity:0.5;cursor:not-allowed}
+.upload-zone{border:1.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:2rem;text-align:center;cursor:pointer;transition:background 0.15s}
+.upload-zone:hover{background:var(--color-background-secondary)}
+.chat-wrap{height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 0;margin-bottom:12px}
+.bubble{max-width:88%;padding:10px 14px;font-size:14px;line-height:1.65}
+.bubble.ai{align-self:flex-start;background:var(--color-background-secondary);border-radius:12px 12px 12px 2px;border:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary)}
+.bubble.user{align-self:flex-end;background:var(--color-background-info);border-radius:12px 12px 2px 12px;color:var(--color-text-primary)}
+.bubble.muted{color:var(--color-text-secondary)}
+.send-row{display:flex;gap:8px}
+.send-row input{flex:1;font-size:14px}
+.send-row button{padding:8px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;font-size:14px;white-space:nowrap}
+.send-row button:hover{background:var(--color-background-secondary)}
+.quick-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.qbtn{font-size:12px;padding:5px 10px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer}
+.qbtn:hover{border-color:var(--color-border-primary);color:var(--color-text-primary)}
+.advice-item{display:flex;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.advice-item:last-child{border-bottom:none}
+.num{width:24px;height:24px;border-radius:50%;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--color-text-primary);flex-shrink:0;margin-top:2px}
+.log-item{padding:12px 0;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;gap:10px;align-items:flex-start}
+.log-item:last-child{border-bottom:none}
+.log-thumb{width:52px;height:52px;border-radius:var(--border-radius-md);object-fit:cover;flex-shrink:0;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:center}
+.loc-input-row{display:flex;gap:8px;margin-bottom:8px}
+.loc-input-row input{flex:1;font-size:14px}
+.loc-input-row button{padding:8px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;font-size:14px;white-space:nowrap}
+.loc-input-row button:hover{background:var(--color-background-secondary)}
+.suggestion{padding:8px 12px;font-size:13px;cursor:pointer;border-radius:var(--border-radius-md);color:var(--color-text-primary)}
+.suggestion:hover{background:var(--color-background-secondary)}
 </style>
 
 <div id="app">
-  <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.5rem;">
-    <i class="ti ti-plant-2" style="font-size:24px; color:var(--color-text-success);" aria-hidden="true"></i>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem">
+    <i class="ti ti-plant-2" style="font-size:26px;color:var(--color-text-success)" aria-hidden="true"></i>
     <div>
-      <div style="font-size:18px; font-weight:500;">畑AIアドバイザー</div>
-      <div style="font-size:12px; color:var(--color-text-secondary);">GPS連携 · 畑マップ · AI相談</div>
+      <div style="font-size:17px;font-weight:500;color:var(--color-text-primary)">畑AIアドバイザー</div>
+      <div style="font-size:12px;color:var(--color-text-secondary)">記録・天気・AI相談</div>
     </div>
   </div>
 
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('weather')"><i class="ti ti-cloud" aria-hidden="true"></i> 天気</button>
-    <button class="tab-btn" onclick="switchTab('map')"><i class="ti ti-map" aria-hidden="true"></i> 畑マップ</button>
-    <button class="tab-btn" onclick="switchTab('chat')"><i class="ti ti-message-2" aria-hidden="true"></i> AI相談</button>
+    <button class="tab active" onclick="gotoTab('home',this)"><i class="ti ti-home" aria-hidden="true"></i>ホーム</button>
+    <button class="tab" onclick="gotoTab('record',this)"><i class="ti ti-camera" aria-hidden="true"></i>記録</button>
+    <button class="tab" onclick="gotoTab('log',this)"><i class="ti ti-history" aria-hidden="true"></i>履歴</button>
+    <button class="tab" onclick="gotoTab('chat',this)"><i class="ti ti-message-2" aria-hidden="true"></i>相談</button>
   </div>
 
-  <!-- 天気タブ -->
-  <div id="tab-weather" class="tab-content active">
+  <!-- HOME -->
+  <div id="tab-home" class="screen active">
     <div class="card">
-      <div class="label">現在地の天気を取得</div>
-      <button onclick="getWeather()" style="width:100%; padding:10px; border-radius:var(--border-radius-md); border:0.5px solid var(--color-border-secondary); background:var(--color-background-primary); cursor:pointer; font-size:14px; color:var(--color-text-primary);">
-        <i class="ti ti-current-location" aria-hidden="true"></i>　GPSで現在地を取得する
-      </button>
-      <div id="weather-status" style="font-size:12px; color:var(--color-text-secondary); margin-top:8px; text-align:center;"></div>
-    </div>
-    <div id="weather-result" style="display:none;">
-      <div class="card">
-        <div style="font-size:14px; font-weight:500; margin-bottom:4px;" id="weather-location"></div>
-        <div style="font-size:12px; color:var(--color-text-secondary);" id="weather-date"></div>
-        <div class="weather-grid">
-          <div class="weather-card">
-            <div class="weather-val" id="w-temp">--</div>
-            <div class="weather-lbl">気温 (°C)</div>
-          </div>
-          <div class="weather-card">
-            <div class="weather-val" id="w-rain">--</div>
-            <div class="weather-lbl">降水量 (mm)</div>
-          </div>
-          <div class="weather-card">
-            <div class="weather-val" id="w-humid">--</div>
-            <div class="weather-lbl">湿度 (%)</div>
-          </div>
+      <div class="lbl"><i class="ti ti-map-pin" aria-hidden="true"></i> 畑の場所を入力</div>
+      <div class="loc-input-row">
+        <input type="text" id="loc-input" placeholder="例：世田谷区、静岡市葵区、札幌" onkeydown="if(event.key==='Enter')searchLocation()">
+        <button onclick="searchLocation()"><i class="ti ti-search" aria-hidden="true"></i> 検索</button>
+      </div>
+      <div id="loc-suggestions" style="display:none;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);overflow:hidden;margin-top:4px"></div>
+      <div id="loc-status" style="font-size:12px;color:var(--color-text-secondary);margin-top:4px"></div>
+      <div id="loc-selected" style="display:none;margin-top:8px;padding:8px 10px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);display:none;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--color-text-primary)" id="loc-name-disp"></div>
+          <div style="font-size:11px;color:var(--color-text-secondary)" id="loc-coord-disp"></div>
         </div>
+        <button onclick="clearLocation()" style="border:none;background:none;cursor:pointer;color:var(--color-text-secondary);font-size:13px;padding:4px">変更</button>
       </div>
+    </div>
+
+    <div id="weather-card" style="display:none" class="card">
+      <div class="lbl"><i class="ti ti-cloud" aria-hidden="true"></i> 今日の天気</div>
+      <div class="weather-row">
+        <div class="wcard"><div class="wval" id="w-temp">--</div><div class="wlbl">気温 °C</div></div>
+        <div class="wcard"><div class="wval" id="w-humid">--</div><div class="wlbl">湿度 %</div></div>
+      </div>
+      <div class="weather-row" style="margin-top:8px">
+        <div class="wcard"><div class="wval" id="w-rain">--</div><div class="wlbl">今日の降水 mm</div></div>
+        <div class="wcard"><div class="wval" id="w-uv">--</div><div class="wlbl">UV指数</div></div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="lbl">7日間の降水予報</div>
+        <div style="display:flex;gap:4px;align-items:flex-end;height:60px;margin-top:8px" id="fc-bars"></div>
+        <div style="display:flex;gap:4px;margin-top:4px" id="fc-lbls"></div>
+      </div>
+    </div>
+
+    <div class="card" id="advice-card" style="display:none">
+      <div class="lbl"><i class="ti ti-bulb" aria-hidden="true"></i> 今日やること</div>
+      <div id="advice-body"><div style="font-size:13px;color:var(--color-text-secondary)">読み込み中...</div></div>
+    </div>
+
+    <div class="card">
+      <div class="lbl"><i class="ti ti-pencil" aria-hidden="true"></i> 今日の一言メモ</div>
+      <textarea id="quick-memo" placeholder="気になることを一言だけ…" style="width:100%;height:60px;font-size:14px;resize:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:8px;background:var(--color-background-primary);color:var(--color-text-primary)"></textarea>
+      <button class="primary-btn" style="margin-top:8px" onclick="saveQuickMemo()"><i class="ti ti-check" aria-hidden="true"></i>　記録する</button>
+    </div>
+  </div>
+
+  <!-- RECORD -->
+  <div id="tab-record" class="screen">
+    <div class="card">
+      <div class="lbl">写真を撮る・選ぶ</div>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-in').click()">
+        <i class="ti ti-camera" style="font-size:32px;color:var(--color-text-secondary)" aria-hidden="true"></i>
+        <div style="font-size:14px;font-weight:500;color:var(--color-text-primary);margin-top:8px">タップして写真を追加</div>
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px">JPG / PNG</div>
+        <input id="file-in" type="file" accept="image/*" style="display:none" onchange="handlePhoto(event)">
+      </div>
+      <div id="photo-preview" style="display:none;margin-top:10px">
+        <img id="preview-img" style="width:100%;border-radius:var(--border-radius-lg);max-height:200px;object-fit:cover">
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-top:6px;text-align:center"><i class="ti ti-check" aria-hidden="true"></i> 写真を読み込みました</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="lbl">今日の状況</div>
+      <textarea id="rec-memo" placeholder="気になること、困っていることを一言…例：葉が黄色くなってきた、雑草がすごい" style="width:100%;height:80px;font-size:14px;resize:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:8px;background:var(--color-background-primary);color:var(--color-text-primary)"></textarea>
+    </div>
+    <div class="card">
+      <div class="lbl">育てているもの（任意）</div>
+      <input id="rec-crops" type="text" placeholder="例：トマト、ナス、まだ何も植えていない" style="width:100%;font-size:14px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:8px;background:var(--color-background-primary);color:var(--color-text-primary)">
+    </div>
+    <button class="primary-btn" id="rec-btn" onclick="saveRecord()"><i class="ti ti-sparkles" aria-hidden="true"></i>　記録してAIアドバイスをもらう ↗</button>
+    <div id="rec-result" style="display:none;margin-top:1rem">
       <div class="card">
-        <div class="label">今後7日間の降水予報</div>
-        <div id="forecast-bar" style="display:flex; gap:4px; align-items:flex-end; height:80px; margin-top:8px;"></div>
-        <div id="forecast-labels" style="display:flex; gap:4px; margin-top:4px;"></div>
+        <div class="lbl"><i class="ti ti-clipboard-list" aria-hidden="true"></i> AIからのアドバイス</div>
+        <div id="rec-result-body" style="font-size:14px;color:var(--color-text-primary);line-height:1.75"></div>
       </div>
-      <div class="card" id="weather-advice-card">
-        <div class="label"><i class="ti ti-bulb" aria-hidden="true"></i> 天気に基づくアドバイス</div>
-        <div id="weather-advice" style="font-size:13px; color:var(--color-text-primary); line-height:1.7;"></div>
+    </div>
+    <div id="rec-error" style="display:none;margin-top:10px;padding:10px;background:var(--color-background-danger);border-radius:var(--border-radius-md);font-size:13px;color:var(--color-text-danger)"></div>
+  </div>
+
+  <!-- LOG -->
+  <div id="tab-log" class="screen">
+    <div class="card">
+      <div class="lbl"><i class="ti ti-history" aria-hidden="true"></i> 記録履歴</div>
+      <div id="log-body">
+        <div style="font-size:13px;color:var(--color-text-secondary);padding:1rem 0;text-align:center">まだ記録がありません<br>「記録」タブから始めましょう</div>
       </div>
     </div>
   </div>
 
-  <!-- 畑マップタブ -->
-  <div id="tab-map" class="tab-content">
-    <div class="card">
-      <div class="label">区画サイズ設定（縦 × 横）</div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input type="number" id="grid-rows" value="4" min="2" max="8" style="width:60px; font-size:14px;" onchange="buildGrid()"/>
-        <span style="color:var(--color-text-secondary);">×</span>
-        <input type="number" id="grid-cols" value="5" min="2" max="8" style="width:60px; font-size:14px;" onchange="buildGrid()"/>
-        <span style="font-size:12px; color:var(--color-text-secondary);">区画</span>
+  <!-- CHAT -->
+  <div id="tab-chat" class="screen">
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:10px 14px;border-bottom:0.5px solid var(--color-border-tertiary)">
+        <div style="font-size:13px;font-weight:500;color:var(--color-text-primary)">農業AIに何でも相談</div>
+        <div style="font-size:11px;color:var(--color-text-secondary)">天気・記録情報を踏まえて答えます</div>
       </div>
-    </div>
-    <div class="card" style="position:relative;">
-      <div class="label">区画をタップして作物を登録</div>
-      <div id="map-grid"></div>
-      <div id="crop-picker">
-        <div style="font-size:11px; color:var(--color-text-secondary); padding:4px 10px 6px;">作物を選ぶ</div>
-        <div class="crop-option" onclick="setCrop('🍅 トマト','#FFE4E1')">🍅 トマト</div>
-        <div class="crop-option" onclick="setCrop('🍆 ナス','#E8D5F5')">🍆 ナス</div>
-        <div class="crop-option" onclick="setCrop('🥒 キュウリ','#D5F5DA')">🥒 キュウリ</div>
-        <div class="crop-option" onclick="setCrop('🌽 トウモロコシ','#FFF8D5')">🌽 トウモロコシ</div>
-        <div class="crop-option" onclick="setCrop('🥬 レタス','#D5F5DA')">🥬 レタス</div>
-        <div class="crop-option" onclick="setCrop('🧅 玉ねぎ','#FFF0D5')">🧅 玉ねぎ</div>
-        <div class="crop-option" onclick="setCrop('🥕 にんじん','#FFE8D5')">🥕 にんじん</div>
-        <div class="crop-option" onclick="setCrop('🌿 ハーブ','#D5F5E8')">🌿 ハーブ</div>
-        <div class="crop-option" onclick="setCrop('🟫 未使用','#F0EDE8')">🟫 未使用</div>
-        <div class="crop-option" onclick="setCrop('','')">✕ クリア</div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="label">マップ概要</div>
-      <div id="map-summary" style="font-size:13px; color:var(--color-text-secondary);">区画をタップして作物を登録してください</div>
-    </div>
-  </div>
-
-  <!-- AI相談タブ -->
-  <div id="tab-chat" class="tab-content">
-    <div class="card" style="padding:0; overflow:hidden;">
-      <div style="padding:10px 14px; border-bottom:0.5px solid var(--color-border-tertiary);">
-        <div style="font-size:13px; font-weight:500;">農業AIに何でも相談</div>
-        <div style="font-size:11px; color:var(--color-text-secondary);">天気・マップ情報も自動で共有されます</div>
-      </div>
-      <div style="padding:12px;">
-        <div class="chat-area" id="chat-area"></div>
-        <div class="quick-btns">
-          <button class="quick-btn" onclick="quickSend('今週、雑草を抜くべきですか？')">雑草どうする？</button>
-          <button class="quick-btn" onclick="quickSend('今から植えられるものは何ですか？')">何を植える？</button>
-          <button class="quick-btn" onclick="quickSend('肥料はいつまくべきですか？')">肥料のタイミング</button>
-          <button class="quick-btn" onclick="quickSend('水やりの頻度を教えてください')">水やり頻度</button>
+      <div style="padding:12px">
+        <div class="chat-wrap" id="chat-area"></div>
+        <div class="quick-row">
+          <button class="qbtn" onclick="qsend('雑草は今抜くべき？')">雑草どうする？</button>
+          <button class="qbtn" onclick="qsend('今から植えられるものは？')">何を植える？</button>
+          <button class="qbtn" onclick="qsend('水やりの頻度は？')">水やり頻度</button>
+          <button class="qbtn" onclick="qsend('肥料のタイミングは？')">肥料のタイミング</button>
         </div>
-        <div class="chat-input-row">
-          <input type="text" id="chat-input" placeholder="質問を入力..." onkeydown="if(event.key==='Enter')sendChat()" />
+        <div class="send-row">
+          <input type="text" id="chat-in" placeholder="質問を入力..." onkeydown="if(event.key==='Enter')sendChat()">
           <button onclick="sendChat()">送信 ↗</button>
         </div>
       </div>
@@ -147,211 +178,275 @@
 </div>
 
 <script>
-let weatherData = null;
-let gridData = {};
+let wx = null;
+let logs = [];
 let chatHistory = [];
-let selectedCell = null;
+let photoB64 = null;
+let selectedLoc = null;
 
-function switchTab(tab) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  event.target.closest('.tab-btn').classList.add('active');
-  if (tab === 'map') buildGrid();
-  if (tab === 'chat' && chatHistory.length === 0) initChat();
-}
-
-async function getWeather() {
-  const status = document.getElementById('weather-status');
-  status.textContent = 'GPS取得中...';
-  if (!navigator.geolocation) { status.textContent = 'GPSが使えません'; return; }
-  navigator.geolocation.getCurrentPosition(async (pos) => {
-    const lat = pos.coords.latitude.toFixed(4);
-    const lon = pos.coords.longitude.toFixed(4);
-    status.textContent = `位置取得: ${lat}, ${lon} — 天気データ取得中...`;
-    try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation&daily=precipitation_sum&forecast_days=7&timezone=Asia%2FTokyo`;
-      const res = await fetch(url);
-      const data = await res.json();
-      weatherData = { lat, lon, data };
-      renderWeather(data, lat, lon);
-      status.textContent = '';
-    } catch(e) {
-      status.textContent = '天気データの取得に失敗しました';
+(async () => {
+  try {
+    const r = await window.storage.get('hatake-logs');
+    logs = r ? JSON.parse(r.value) : [];
+  } catch(e) { logs = []; }
+  try {
+    const r = await window.storage.get('hatake-location');
+    if (r) {
+      selectedLoc = JSON.parse(r.value);
+      showSelectedLoc();
+      fetchWeather();
     }
-  }, () => { status.textContent = 'GPS許可が必要です'; });
+  } catch(e) {}
+})();
+
+function gotoTab(t, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  el.classList.add('active');
+  if (t === 'log') renderLog();
+  if (t === 'chat' && chatHistory.length === 0) initChat();
 }
 
-function renderWeather(data, lat, lon) {
-  const c = data.current;
-  document.getElementById('w-temp').textContent = Math.round(c.temperature_2m);
-  document.getElementById('w-rain').textContent = c.precipitation.toFixed(1);
-  document.getElementById('w-humid').textContent = Math.round(c.relative_humidity_2m);
-  document.getElementById('weather-location').textContent = `緯度 ${lat} / 経度 ${lon}`;
-  document.getElementById('weather-date').textContent = new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric', weekday:'short'});
-
-  const daily = data.daily;
-  const maxRain = Math.max(...daily.precipitation_sum, 1);
-  const bar = document.getElementById('forecast-bar');
-  const lbl = document.getElementById('forecast-labels');
-  bar.innerHTML = ''; lbl.innerHTML = '';
-  const days = ['日','月','火','水','木','金','土'];
-  daily.precipitation_sum.forEach((r, i) => {
-    const h = Math.max(8, Math.round((r / maxRain) * 72));
-    const color = r > 5 ? '#378ADD' : r > 1 ? '#85B7EB' : '#D3D1C7';
-    bar.innerHTML += `<div style="flex:1; background:${color}; border-radius:4px 4px 0 0; height:${h}px;" title="${r.toFixed(1)}mm"></div>`;
-    const d = new Date(daily.time[i]);
-    lbl.innerHTML += `<div style="flex:1; text-align:center; font-size:10px; color:var(--color-text-secondary);">${days[d.getDay()]}</div>`;
-  });
-
-  const totalRain = daily.precipitation_sum.reduce((a,b) => a+b, 0);
-  const avgTemp = Math.round(c.temperature_2m);
-  let advice = '';
-  if (totalRain > 30) advice = '今週は雨が多めです。水やりは控えめにし、排水状況を確認しましょう。雑草は雨後に抜くと根ごと取れやすいです。';
-  else if (totalRain < 5) advice = '今週は乾燥気味の予報です。朝か夕方に水やりをしっかり行いましょう。マルチングで保水するのも効果的です。';
-  else advice = '今週の天気は農作業に適しています。土が湿っているうちに植え付けや施肥を行うと良いタイミングです。';
-  if (avgTemp > 30) advice += ' 気温が高いため、作物の熱ストレスに注意してください。';
-  if (avgTemp < 10) advice += ' 気温が低めです。霜の恐れがある場合は防寒対策を。';
-  document.getElementById('weather-advice').textContent = advice;
-  document.getElementById('weather-result').style.display = 'block';
-}
-
-function buildGrid() {
-  const rows = parseInt(document.getElementById('grid-rows').value) || 4;
-  const cols = parseInt(document.getElementById('grid-cols').value) || 5;
-  const grid = document.getElementById('map-grid');
-  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-  grid.innerHTML = '';
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const key = `${r}-${c}`;
-      const cell = document.createElement('div');
-      cell.className = 'cell' + (gridData[key] ? ' planted' : '');
-      cell.id = 'cell-' + key;
-      if (gridData[key]) {
-        cell.style.background = gridData[key].color;
-        cell.style.borderColor = 'transparent';
-        cell.textContent = gridData[key].name;
-      }
-      cell.onclick = (e) => openPicker(e, key);
-      grid.appendChild(cell);
+async function searchLocation() {
+  const q = document.getElementById('loc-input').value.trim();
+  if (!q) return;
+  const status = document.getElementById('loc-status');
+  status.textContent = '検索中...';
+  document.getElementById('loc-suggestions').style.display = 'none';
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=ja&format=json`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) {
+      status.textContent = '見つかりませんでした。別のキーワードで試してください。';
+      return;
     }
+    status.textContent = '';
+    const sug = document.getElementById('loc-suggestions');
+    sug.innerHTML = data.results.map((r, i) =>
+      `<div class="suggestion" onclick="selectLocation(${i})" data-idx="${i}">
+        <span style="font-weight:500">${r.name}</span>
+        <span style="color:var(--color-text-secondary);font-size:12px;margin-left:6px">${[r.admin1, r.country].filter(Boolean).join(' / ')}</span>
+      </div>`
+    ).join('');
+    sug.style.display = 'block';
+    window._geoResults = data.results;
+  } catch(e) {
+    status.textContent = '検索に失敗しました。もう一度お試しください。';
   }
-  updateMapSummary();
 }
 
-function openPicker(e, key) {
-  selectedCell = key;
-  const picker = document.getElementById('crop-picker');
-  picker.style.display = 'block';
-  picker.style.top = (e.target.offsetTop + e.target.offsetHeight + 4) + 'px';
-  picker.style.left = '0px';
-  e.stopPropagation();
+async function selectLocation(i) {
+  const r = window._geoResults[i];
+  selectedLoc = { name: r.name, admin: r.admin1 || '', country: r.country || '', lat: r.latitude.toFixed(4), lon: r.longitude.toFixed(4) };
+  try { await window.storage.set('hatake-location', JSON.stringify(selectedLoc)); } catch(e) {}
+  document.getElementById('loc-suggestions').style.display = 'none';
+  document.getElementById('loc-input').value = '';
+  showSelectedLoc();
+  fetchWeather();
 }
 
-document.addEventListener('click', () => {
-  document.getElementById('crop-picker').style.display = 'none';
-});
-
-function setCrop(name, color) {
-  if (!selectedCell) return;
-  if (name) {
-    gridData[selectedCell] = { name, color };
-    const cell = document.getElementById('cell-' + selectedCell);
-    cell.classList.add('planted');
-    cell.style.background = color;
-    cell.style.borderColor = 'transparent';
-    cell.textContent = name;
-  } else {
-    delete gridData[selectedCell];
-    const cell = document.getElementById('cell-' + selectedCell);
-    cell.classList.remove('planted');
-    cell.style.background = '';
-    cell.style.borderColor = '';
-    cell.textContent = '';
-  }
-  document.getElementById('crop-picker').style.display = 'none';
-  updateMapSummary();
+function showSelectedLoc() {
+  const el = document.getElementById('loc-selected');
+  document.getElementById('loc-name-disp').textContent = [selectedLoc.name, selectedLoc.admin].filter(Boolean).join('、');
+  document.getElementById('loc-coord-disp').textContent = `緯度 ${selectedLoc.lat} / 経度 ${selectedLoc.lon}`;
+  el.style.display = 'flex';
 }
 
-function updateMapSummary() {
-  const counts = {};
-  Object.values(gridData).forEach(d => {
-    if (d.name && d.name !== '🟫 未使用') counts[d.name] = (counts[d.name] || 0) + 1;
-  });
-  const total = parseInt(document.getElementById('grid-rows').value) * parseInt(document.getElementById('grid-cols').value);
-  const planted = Object.keys(gridData).filter(k => gridData[k].name && gridData[k].name !== '🟫 未使用').length;
-  if (!planted) { document.getElementById('map-summary').textContent = '区画をタップして作物を登録してください'; return; }
-  const list = Object.entries(counts).map(([k,v]) => `${k} × ${v}区画`).join('　');
-  document.getElementById('map-summary').textContent = `全${total}区画中 ${planted}区画を登録済み — ${list}`;
+function clearLocation() {
+  selectedLoc = null;
+  wx = null;
+  document.getElementById('loc-selected').style.display = 'none';
+  document.getElementById('loc-input').value = '';
+  document.getElementById('weather-card').style.display = 'none';
+  document.getElementById('advice-card').style.display = 'none';
+  try { window.storage.delete('hatake-location'); } catch(e) {}
 }
 
-function initChat() {
-  const greeting = 'こんにちは！畑の状態について何でも聞いてください。天気データやマップ情報があれば自動で参考にします。';
-  addMessage('ai', greeting);
-  chatHistory.push({ role: 'assistant', content: greeting });
+async function fetchWeather() {
+  if (!selectedLoc) return;
+  const { lat, lon } = selectedLoc;
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,uv_index&daily=precipitation_sum&forecast_days=7&timezone=Asia%2FTokyo`;
+    const res = await fetch(url);
+    const data = await res.json();
+    wx = { lat, lon, data };
+    const c = data.current;
+    document.getElementById('w-temp').textContent = Math.round(c.temperature_2m);
+    document.getElementById('w-humid').textContent = Math.round(c.relative_humidity_2m);
+    document.getElementById('w-rain').textContent = c.precipitation.toFixed(1);
+    document.getElementById('w-uv').textContent = Math.round(c.uv_index);
+    const daily = data.daily;
+    const maxR = Math.max(...daily.precipitation_sum, 1);
+    const days = ['日','月','火','水','木','金','土'];
+    const barsEl = document.getElementById('fc-bars');
+    const lblsEl = document.getElementById('fc-lbls');
+    barsEl.innerHTML = ''; lblsEl.innerHTML = '';
+    daily.precipitation_sum.forEach((r, i) => {
+      const h = Math.max(6, Math.round((r / maxR) * 52));
+      const col = r > 5 ? '#378ADD' : r > 1 ? '#85B7EB' : 'var(--color-background-secondary)';
+      const border = r <= 1 ? ';border:0.5px solid var(--color-border-tertiary)' : '';
+      barsEl.innerHTML += `<div style="flex:1;background:${col};border-radius:3px 3px 0 0;height:${h}px${border}" title="${r.toFixed(1)}mm"></div>`;
+      const d = new Date(daily.time[i]);
+      lblsEl.innerHTML += `<div style="flex:1;text-align:center;font-size:10px;color:var(--color-text-secondary)">${days[d.getDay()]}</div>`;
+    });
+    document.getElementById('weather-card').style.display = 'block';
+    getAIAdvice();
+  } catch(e) {}
 }
 
-function getContext() {
-  let ctx = '';
-  if (weatherData) {
-    const c = weatherData.data.current;
-    ctx += `現在の天気: 気温${Math.round(c.temperature_2m)}°C、湿度${Math.round(c.relative_humidity_2m)}%、降水${c.precipitation}mm。`;
-  }
-  const crops = Object.values(gridData).filter(d => d.name && d.name !== '🟫 未使用').map(d => d.name);
-  if (crops.length) ctx += ` 畑の作物: ${[...new Set(crops)].join('、')}。`;
-  return ctx;
-}
-
-function addMessage(role, text) {
-  const area = document.getElementById('chat-area');
-  const div = document.createElement('div');
-  div.className = 'msg ' + role;
-  div.textContent = text;
-  area.appendChild(div);
-  area.scrollTop = area.scrollHeight;
-  return div;
-}
-
-function quickSend(text) {
-  document.getElementById('chat-input').value = text;
-  sendChat();
-}
-
-async function sendChat() {
-  const input = document.getElementById('chat-input');
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-  addMessage('user', text);
-  chatHistory.push({ role: 'user', content: text });
-
-  const loading = addMessage('ai', '考え中...');
-  loading.classList.add('loading');
-
-  const context = getContext();
-  const systemPrompt = `あなたは小規模農業・家庭菜園の専門家AIです。${context ? '【現在の畑情報】' + context : ''}初心者に寄り添い、具体的で実践的なアドバイスをしてください。返答は3〜5文程度で簡潔に。`;
-
+async function getAIAdvice() {
+  document.getElementById('advice-card').style.display = 'block';
+  const c = wx.data.current;
+  const today = new Date().toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'});
+  const locName = selectedLoc ? `${selectedLoc.name}${selectedLoc.admin ? '（'+selectedLoc.admin+'）' : ''}` : '不明';
+  const lastLog = logs.length > 0 ? `前回記録: ${logs[0].date} - ${logs[0].memo}` : '記録なし';
+  const prompt = `今日は${today}。場所は${locName}。気温${Math.round(c.temperature_2m)}°C、湿度${Math.round(c.relative_humidity_2m)}%、降水${c.precipitation}mm。${lastLog}。家庭菜園（約100平方メートル）の初心者向けに、今日やるべき作業を優先順位つきで3つ教えてください。各項目：作業名（10字以内）と理由（1〜2文）。フォーマット：1. [作業名] — [理由]`;
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: chatHistory
-      })
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:500, system:'家庭菜園の専門家。初心者向けに具体的で実践的なアドバイスを日本語で。', messages:[{role:'user',content:prompt}] })
+    });
+    const data = await res.json();
+    const text = data.content[0].text;
+    const lines = text.split('\n').filter(l => l.trim());
+    let html = '';
+    lines.forEach((l, i) => {
+      const clean = l.replace(/^\d+\.\s*/, '');
+      const parts = clean.split(/\s*[—\-–]\s*/);
+      html += `<div class="advice-item"><div class="num">${i+1}</div><div><div style="font-size:14px;font-weight:500;color:var(--color-text-primary)">${parts[0]||''}</div>${parts[1]?`<div style="font-size:13px;color:var(--color-text-secondary);margin-top:3px">${parts[1]}</div>`:''}</div></div>`;
+    });
+    document.getElementById('advice-body').innerHTML = html;
+  } catch(e) {
+    document.getElementById('advice-body').innerHTML = '<div style="font-size:13px;color:var(--color-text-secondary)">アドバイスの取得に失敗しました</div>';
+  }
+}
+
+function handlePhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    photoB64 = ev.target.result.split(',')[1];
+    document.getElementById('preview-img').src = ev.target.result;
+    document.getElementById('photo-preview').style.display = 'block';
+    document.getElementById('upload-zone').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveRecord() {
+  const memo = document.getElementById('rec-memo').value.trim();
+  const crops = document.getElementById('rec-crops').value.trim();
+  const btn = document.getElementById('rec-btn');
+  const errEl = document.getElementById('rec-error');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'AI分析中...';
+  const today = new Date().toLocaleDateString('ja-JP', {month:'long', day:'numeric'});
+  const wxInfo = wx ? `気温${Math.round(wx.data.current.temperature_2m)}°C、湿度${Math.round(wx.data.current.relative_humidity_2m)}%、降水${wx.data.current.precipitation}mm。` : '';
+  const locInfo = selectedLoc ? `場所：${selectedLoc.name}。` : '';
+  const prompt = `${today}の畑の状況です。${locInfo}${wxInfo}作物：${crops||'不明'}。状況：${memo||'特になし'}。${photoB64?'写真あり。':''}家庭菜園初心者向けに今週やるべきことを3〜5つ、理由つきで教えてください。`;
+  const messages = photoB64
+    ? [{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:photoB64}},{type:'text',text:prompt}]}]
+    : [{role:'user',content:prompt}];
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:'家庭菜園の専門家。初心者に寄り添い具体的なアドバイスを日本語で。',messages})
+    });
+    const data = await res.json();
+    const reply = data.content[0].text;
+    const entry = { id:Date.now(), date:today, memo:memo||'（メモなし）', crops:crops||'', advice:reply, photo:photoB64?document.getElementById('preview-img').src:null };
+    logs.unshift(entry);
+    try { await window.storage.set('hatake-logs', JSON.stringify(logs.slice(0,30))); } catch(e) {}
+    document.getElementById('rec-result-body').innerHTML = reply.replace(/\n/g,'<br>');
+    document.getElementById('rec-result').style.display = 'block';
+  } catch(e) {
+    errEl.textContent = 'エラーが発生しました。もう一度お試しください。';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-sparkles" aria-hidden="true"></i>　記録してAIアドバイスをもらう ↗';
+  }
+}
+
+async function saveQuickMemo() {
+  const memo = document.getElementById('quick-memo').value.trim();
+  if (!memo) return;
+  const today = new Date().toLocaleDateString('ja-JP', {month:'long', day:'numeric'});
+  logs.unshift({id:Date.now(), date:today, memo, crops:'', advice:null, photo:null});
+  try { await window.storage.set('hatake-logs', JSON.stringify(logs.slice(0,30))); } catch(e) {}
+  document.getElementById('quick-memo').value = '';
+  const btn = event.currentTarget;
+  btn.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i>　保存しました！';
+  setTimeout(() => { btn.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i>　記録する'; }, 1500);
+}
+
+function renderLog() {
+  const el = document.getElementById('log-body');
+  if (!logs.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--color-text-secondary);padding:1rem 0;text-align:center">まだ記録がありません<br>「記録」タブから始めましょう</div>';
+    return;
+  }
+  el.innerHTML = logs.map(l => `
+    <div class="log-item">
+      ${l.photo ? `<img src="${l.photo}" class="log-thumb" style="width:52px;height:52px;border-radius:var(--border-radius-md);object-fit:cover;flex-shrink:0">` : `<div class="log-thumb" style="display:flex;align-items:center;justify-content:center"><i class="ti ti-plant-2" style="font-size:20px;color:var(--color-text-secondary)" aria-hidden="true"></i></div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:2px">${l.date}</div>
+        <div style="font-size:14px;font-weight:500;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.memo}</div>
+        ${l.crops ? `<div style="font-size:12px;color:var(--color-text-secondary);margin-top:2px">${l.crops}</div>` : ''}
+        ${l.advice ? `<div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">AI: ${l.advice.slice(0,50)}...</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function initChat() {
+  const msg = 'こんにちは！畑のことなら何でも聞いてください。天気データや記録情報があれば一緒に考えます。';
+  addBubble('ai', msg);
+  chatHistory.push({role:'assistant', content:msg});
+}
+
+function addBubble(role, text, muted) {
+  const area = document.getElementById('chat-area');
+  const d = document.createElement('div');
+  d.className = 'bubble ' + role + (muted ? ' muted' : '');
+  d.textContent = text;
+  area.appendChild(d);
+  area.scrollTop = area.scrollHeight;
+  return d;
+}
+
+function qsend(t) { document.getElementById('chat-in').value = t; sendChat(); }
+
+async function sendChat() {
+  const inp = document.getElementById('chat-in');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  addBubble('user', text);
+  chatHistory.push({role:'user', content:text});
+  const loading = addBubble('ai', '考え中...', true);
+  let ctx = '';
+  if (selectedLoc) ctx += `場所: ${selectedLoc.name}。`;
+  if (wx) { const c = wx.data.current; ctx += `気温${Math.round(c.temperature_2m)}°C、湿度${Math.round(c.relative_humidity_2m)}%。`; }
+  if (logs.length) ctx += ` 最近の記録: ${logs[0].date} - ${logs[0].memo}。`;
+  const sys = `家庭菜園・小規模農業の専門家。初心者に寄り添い実践的なアドバイスを日本語で。${ctx ? '【畑情報】' + ctx : ''}返答は3〜4文で簡潔に。`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:600, system:sys, messages:chatHistory})
     });
     const data = await res.json();
     const reply = data.content[0].text;
     loading.textContent = reply;
-    loading.classList.remove('loading');
-    chatHistory.push({ role: 'assistant', content: reply });
+    loading.classList.remove('muted');
+    chatHistory.push({role:'assistant', content:reply});
   } catch(e) {
     loading.textContent = 'エラーが発生しました。もう一度お試しください。';
-    loading.classList.remove('loading');
-    chatHistory.pop();
   }
 }
 </script>
