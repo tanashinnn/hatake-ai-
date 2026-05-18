@@ -5,386 +5,678 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>畑AIアドバイザー</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  /* ========== ここを自分のSupabase情報に書き換えてください ========== */
-  /* 書き換え箇所はJavaScriptの中にあります（下のSUPABASE_URLとSUPABASE_KEY） */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh}
+#app{max-width:480px;margin:0 auto;padding:1.5rem 1rem 5rem}
 
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh}
-  #app{max-width:480px;margin:0 auto;padding:1.5rem 1rem 4rem}
+/* ログイン */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f5f5f0}
+.login-card{background:#fff;border:1px solid #e5e5e0;border-radius:16px;padding:2rem;width:100%;max-width:340px;text-align:center}
+.login-logo{font-size:48px;margin-bottom:1rem}
+.login-title{font-size:20px;font-weight:600;margin-bottom:6px}
+.login-sub{font-size:14px;color:#888;margin-bottom:1.5rem}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:10px;border:1px solid #d5d5d0;background:#fff;color:#1a1a1a;font-size:15px;font-weight:500;cursor:pointer;transition:background 0.15s}
+.google-btn:hover{background:#f5f5f0}
 
-  /* タブバー */
-  .tab-bar{display:flex;gap:4px;background:#e8e8e3;border-radius:10px;padding:4px;margin-bottom:1.5rem}
-  .tab{flex:1;padding:8px 4px;border:none;border-radius:7px;font-size:12px;cursor:pointer;background:transparent;color:#888;font-weight:400;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all 0.15s}
-  .tab i{font-size:18px}
-  .tab.active{background:#fff;color:#1a1a1a;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+/* タブバー */
+.tab-bar{display:flex;gap:3px;background:#e8e8e3;border-radius:10px;padding:4px;margin-bottom:1.5rem}
+.tab{flex:1;padding:7px 2px;border:none;border-radius:7px;font-size:11px;cursor:pointer;background:transparent;color:#888;display:flex;flex-direction:column;align-items:center;gap:1px;transition:all 0.15s}
+.tab i{font-size:17px}
+.tab.active{background:#fff;color:#1a1a1a;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.screen{display:none}
+.screen.active{display:block}
 
-  /* 画面 */
-  .screen{display:none}
-  .screen.active{display:block}
+/* カード */
+.card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.lbl{font-size:12px;color:#888;margin-bottom:6px}
+.sec-title{font-size:15px;font-weight:600;margin-bottom:12px}
 
-  /* カード */
-  .card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
-  .lbl{font-size:12px;color:#888;margin-bottom:6px}
+/* 天気 */
+.w-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.wcard{background:#f5f5f0;border-radius:8px;padding:10px;text-align:center}
+.wval{font-size:20px;font-weight:500}
+.wlbl{font-size:11px;color:#888;margin-top:2px}
 
-  /* 天気 */
-  .weather-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-  .wcard{background:#f5f5f0;border-radius:8px;padding:10px;text-align:center}
-  .wval{font-size:22px;font-weight:500;color:#1a1a1a}
-  .wlbl{font-size:11px;color:#888;margin-top:2px}
+/* ボタン */
+.btn{padding:10px 16px;border-radius:10px;border:1px solid #d5d5d0;background:#fff;color:#1a1a1a;font-size:14px;cursor:pointer;font-weight:500;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:#f5f5f0}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn-block{width:100%;justify-content:center}
+.btn-green{background:#f0f7f0;border-color:#a8d5a8;color:#2d7a2d}
+.btn-green:hover{background:#e4f0e4}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-danger{background:#fff0f0;border-color:#ffb0b0;color:#c00}
 
-  /* ボタン */
-  .primary-btn{width:100%;padding:12px;border-radius:10px;border:1px solid #d0d0ca;background:#fff;color:#1a1a1a;font-size:14px;cursor:pointer;font-weight:500;transition:background 0.15s}
-  .primary-btn:hover{background:#f5f5f0}
-  .primary-btn:disabled{opacity:0.5;cursor:not-allowed}
-  .primary-btn.green{background:#f0f7f0;border-color:#a8d5a8;color:#2d7a2d}
-  .primary-btn.green:hover{background:#e4f0e4}
+/* 入力 */
+input[type=text],input[type=password],textarea,select{width:100%;font-size:14px;border:1px solid #d5d5d0;border-radius:8px;padding:9px 12px;background:#fff;color:#1a1a1a;outline:none;font-family:inherit}
+input:focus,textarea:focus,select:focus{border-color:#888}
+textarea{resize:none}
 
-  /* 入力 */
-  input[type=text],textarea{width:100%;font-size:14px;border:1px solid #d5d5d0;border-radius:8px;padding:9px 12px;background:#fff;color:#1a1a1a;outline:none;font-family:inherit}
-  input[type=text]:focus,textarea:focus{border-color:#888}
-  textarea{resize:none}
+/* 場所 */
+.loc-row{display:flex;gap:8px}
+.loc-row input{flex:1}
+.suggestions{border:1px solid #e5e5e0;border-radius:8px;overflow:hidden;margin-top:4px;display:none;background:#fff}
+.suggestion{padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid #f0f0eb}
+.suggestion:last-child{border-bottom:none}
+.suggestion:hover{background:#f5f5f0}
+.loc-badge{display:flex;align-items:center;justify-content:space-between;background:#f5f5f0;border-radius:8px;padding:8px 12px;margin-top:8px}
 
-  /* 場所検索 */
-  .loc-row{display:flex;gap:8px;margin-bottom:8px}
-  .loc-row input{flex:1}
-  .loc-row button{padding:9px 16px;border-radius:8px;border:1px solid #d5d5d0;background:#fff;color:#1a1a1a;cursor:pointer;font-size:14px;white-space:nowrap}
-  .loc-row button:hover{background:#f5f5f0}
-  .suggestions{border:1px solid #e5e5e0;border-radius:8px;overflow:hidden;margin-top:4px;display:none}
-  .suggestion{padding:9px 12px;font-size:13px;cursor:pointer;color:#1a1a1a;border-bottom:1px solid #f0f0eb}
-  .suggestion:last-child{border-bottom:none}
-  .suggestion:hover{background:#f5f5f0}
-  .loc-badge{display:flex;align-items:center;justify-content:space-between;background:#f5f5f0;border-radius:8px;padding:8px 12px;margin-top:8px}
-  .loc-badge-text{font-size:13px;font-weight:500;color:#1a1a1a}
-  .loc-badge-sub{font-size:11px;color:#888;margin-top:2px}
-  .loc-change{border:none;background:none;cursor:pointer;color:#888;font-size:13px;padding:4px}
-  .loc-change:hover{color:#1a1a1a}
+/* アドバイス */
+.adv-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0eb}
+.adv-item:last-child{border-bottom:none}
+.num{width:24px;height:24px;border-radius:50%;background:#f0f7f0;border:1px solid #a8d5a8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#2d7a2d;flex-shrink:0;margin-top:2px}
 
-  /* アドバイス */
-  .advice-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0eb}
-  .advice-item:last-child{border-bottom:none}
-  .num{width:24px;height:24px;border-radius:50%;background:#f0f0eb;border:1px solid #e0e0da;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#1a1a1a;flex-shrink:0;margin-top:2px}
+/* チャット */
+.chat-wrap{height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 0;margin-bottom:12px}
+.bubble{max-width:88%;padding:10px 14px;font-size:14px;line-height:1.65}
+.bubble.ai{align-self:flex-start;background:#f5f5f0;border-radius:12px 12px 12px 2px;border:1px solid #e5e5e0}
+.bubble.user{align-self:flex-end;background:#e8f0ff;border-radius:12px 12px 2px 12px}
+.bubble.muted{color:#888}
+.send-row{display:flex;gap:8px}
+.send-row input{flex:1}
+.qrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.qbtn{font-size:12px;padding:5px 10px;border-radius:20px;border:1px solid #d5d5d0;background:#fff;color:#888;cursor:pointer}
+.qbtn:hover{color:#1a1a1a;border-color:#888}
 
-  /* 写真アップロード */
-  .upload-zone{border:1.5px dashed #c8c8c3;border-radius:12px;padding:2rem;text-align:center;cursor:pointer;transition:background 0.15s}
-  .upload-zone:hover{background:#f5f5f0}
+/* 履歴 */
+.log-item{padding:12px 0;border-bottom:1px solid #f0f0eb;display:flex;gap:10px}
+.log-item:last-child{border-bottom:none}
+.log-thumb{width:44px;height:44px;border-radius:8px;background:#f0f0eb;border:1px solid #e5e5e0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
-  /* チャット */
-  .chat-wrap{height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 0;margin-bottom:12px}
-  .bubble{max-width:88%;padding:10px 14px;font-size:14px;line-height:1.65}
-  .bubble.ai{align-self:flex-start;background:#f5f5f0;border-radius:12px 12px 12px 2px;border:1px solid #e5e5e0;color:#1a1a1a}
-  .bubble.user{align-self:flex-end;background:#e8f0ff;border-radius:12px 12px 2px 12px;color:#1a1a1a}
-  .bubble.muted{color:#888}
-  .send-row{display:flex;gap:8px}
-  .send-row input{flex:1}
-  .send-row button{padding:9px 16px;border-radius:8px;border:1px solid #d5d5d0;background:#fff;color:#1a1a1a;cursor:pointer;font-size:14px;white-space:nowrap}
-  .send-row button:hover{background:#f5f5f0}
-  .quick-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-  .qbtn{font-size:12px;padding:5px 10px;border-radius:20px;border:1px solid #d5d5d0;background:#fff;color:#888;cursor:pointer}
-  .qbtn:hover{border-color:#888;color:#1a1a1a}
+/* 畑マップ */
+#map-grid{display:grid;gap:4px;margin-top:8px}
+.cell{border-radius:6px;border:1.5px dashed #c8c8c3;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#aaa;transition:all 0.15s;min-height:48px;text-align:center;padding:2px;position:relative}
+.cell:hover{border-color:#888;background:#f5f5f0}
+.cell.planted{border-style:solid;border-color:transparent}
+.crop-picker{display:none;position:fixed;background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:8px;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,0.12);max-width:220px}
+.crop-opt{padding:8px 12px;cursor:pointer;border-radius:6px;font-size:13px}
+.crop-opt:hover{background:#f5f5f0}
 
-  /* 履歴 */
-  .log-item{padding:12px 0;border-bottom:1px solid #f0f0eb;display:flex;gap:10px;align-items:flex-start}
-  .log-item:last-child{border-bottom:none}
-  .log-thumb{width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#f0f0eb;border:1px solid #e5e5e0;display:flex;align-items:center;justify-content:center}
+/* 連作バッジ */
+.rot-badge{font-size:13px;padding:8px 12px;border-radius:8px;margin-top:6px;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.rot-badge.danger{background:#fff0f0;border:1px solid #ffb0b0;color:#c00}
+.rot-badge.warn{background:#fffbe6;border:1px solid #ffe066;color:#7a6000}
+.rot-badge.ok{background:#f0fff0;border:1px solid #a8d5a8;color:#2d7a2d}
 
-  /* 予報バー */
-  .fc-bars{display:flex;gap:4px;align-items:flex-end;height:60px;margin-top:8px}
-  .fc-lbls{display:flex;gap:4px;margin-top:4px}
+/* 予報 */
+.fc-bars{display:flex;gap:4px;align-items:flex-end;height:56px;margin-top:8px}
+.fc-lbls{display:flex;gap:4px;margin-top:4px}
 
-  /* ステータス */
-  .status-msg{font-size:12px;color:#888;margin-top:4px}
-  .error-msg{padding:10px 12px;background:#fff0f0;border:1px solid #ffc0c0;border-radius:8px;font-size:13px;color:#c00;margin-top:10px}
-  .success-msg{padding:10px 12px;background:#f0fff0;border:1px solid #a8d5a8;border-radius:8px;font-size:13px;color:#2d7a2d;margin-top:10px}
+/* 設定 */
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0eb}
+.set-row:last-child{border-bottom:none}
 
-  /* ヘッダー */
-  .app-header{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem}
-  .app-title{font-size:17px;font-weight:500;color:#1a1a1a}
-  .app-sub{font-size:12px;color:#888}
+/* メッセージ */
+.msg-ok{padding:10px 12px;background:#f0fff0;border:1px solid #a8d5a8;border-radius:8px;font-size:13px;color:#2d7a2d;margin-top:8px}
+.msg-err{padding:10px 12px;background:#fff0f0;border:1px solid #ffb0b0;border-radius:8px;font-size:13px;color:#c00;margin-top:8px}
+
+/* 警告バナー */
+.warn-banner{background:#fffbe6;border:1px solid #ffe066;border-radius:10px;padding:10px 14px;margin-bottom:1rem;font-size:13px;color:#7a6000}
+
+/* アップロード */
+.upload-zone{border:1.5px dashed #c8c8c3;border-radius:12px;padding:1.5rem;text-align:center;cursor:pointer}
+.upload-zone:hover{background:#f5f5f0}
+
+/* ヘッダー */
+.app-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.avatar{width:32px;height:32px;border-radius:50%;background:#e8e8e3;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;flex-shrink:0}
+.avatar img{width:100%;height:100%;object-fit:cover}
+
+.map-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.leg-item{font-size:11px;padding:3px 8px;border-radius:20px;border:1px solid #e5e5e0;background:#fff}
 </style>
 </head>
 <body>
+
+<!-- ログイン -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">🌱</div>
+    <div class="login-title">畑AIアドバイザー</div>
+    <div class="login-sub">記録・天気・畑マップ・AI相談</div>
+    <button class="google-btn" onclick="loginGoogle()">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Googleでログイン
+    </button>
+    <div id="login-err" style="margin-top:10px;font-size:13px;color:#c00;display:none"></div>
+  </div>
+</div>
+
+<!-- メインアプリ -->
+<div id="main-app" style="display:none">
 <div id="app">
-  <div class="app-header">
-    <i class="ti ti-plant-2" style="font-size:26px;color:#4a9a4a"></i>
-    <div>
-      <div class="app-title">畑AIアドバイザー</div>
-      <div class="app-sub">記録・天気・AI相談</div>
+
+  <div class="app-hdr">
+    <div style="display:flex;align-items:center;gap:10px">
+      <i class="ti ti-plant-2" style="font-size:24px;color:#4a9a4a"></i>
+      <div>
+        <div style="font-size:17px;font-weight:500">畑AIアドバイザー</div>
+        <div style="font-size:12px;color:#888" id="hdr-name">読み込み中...</div>
+      </div>
+    </div>
+    <div class="avatar" id="avatar" onclick="gotoTab('settings',document.querySelectorAll('.tab')[4])">
+      <i class="ti ti-user" style="color:#888"></i>
     </div>
   </div>
 
   <div class="tab-bar">
     <button class="tab active" onclick="gotoTab('home',this)"><i class="ti ti-home"></i>ホーム</button>
     <button class="tab" onclick="gotoTab('record',this)"><i class="ti ti-camera"></i>記録</button>
+    <button class="tab" onclick="gotoTab('map',this)"><i class="ti ti-map"></i>畑マップ</button>
     <button class="tab" onclick="gotoTab('log',this)"><i class="ti ti-history"></i>履歴</button>
-    <button class="tab" onclick="gotoTab('chat',this)"><i class="ti ti-message-2"></i>相談</button>
+    <button class="tab" onclick="gotoTab('settings',this)"><i class="ti ti-settings"></i>設定</button>
   </div>
 
   <!-- ホーム -->
   <div id="tab-home" class="screen active">
+    <div id="no-key-banner" class="warn-banner" style="display:none">
+      <i class="ti ti-alert-triangle"></i> <strong>APIキー未設定</strong> — 「設定」タブでAIのAPIキーを入力するとAI機能が使えます。
+      <br><button class="btn btn-sm" style="margin-top:6px" onclick="gotoTab('settings',document.querySelectorAll('.tab')[4])">設定へ →</button>
+    </div>
+
     <div class="card">
       <div class="lbl"><i class="ti ti-map-pin"></i> 畑の場所</div>
-      <div class="loc-row">
-        <input type="text" id="loc-input" placeholder="例：世田谷区、静岡市、札幌" onkeydown="if(event.key==='Enter')searchLocation()">
-        <button onclick="searchLocation()"><i class="ti ti-search"></i> 検索</button>
-      </div>
-      <div class="suggestions" id="loc-suggestions"></div>
-      <div class="status-msg" id="loc-status"></div>
-      <div class="loc-badge" id="loc-badge" style="display:none">
-        <div>
-          <div class="loc-badge-text" id="loc-name-disp"></div>
-          <div class="loc-badge-sub" id="loc-coord-disp"></div>
+      <div id="loc-saved" style="display:none">
+        <div class="loc-badge">
+          <div>
+            <div style="font-size:13px;font-weight:500" id="loc-name-disp"></div>
+            <div style="font-size:11px;color:#888" id="loc-coord-disp"></div>
+          </div>
+          <button class="btn btn-sm" onclick="showLocInput()">変更</button>
         </div>
-        <button class="loc-change" onclick="clearLocation()">変更</button>
+      </div>
+      <div id="loc-input-wrap">
+        <div class="loc-row" style="margin-bottom:4px">
+          <input type="text" id="loc-q" placeholder="例：Setagaya Tokyo、Shizuoka City" onkeydown="if(event.key==='Enter')searchLoc()">
+          <button class="btn" onclick="searchLoc()"><i class="ti ti-search"></i></button>
+        </div>
+        <div style="font-size:11px;color:#888;margin-bottom:4px">英語で入力すると精度が上がります</div>
+        <div class="suggestions" id="loc-sugs"></div>
+        <div style="font-size:12px;color:#888;margin-top:4px" id="loc-status"></div>
       </div>
     </div>
 
-    <div class="card" id="weather-card" style="display:none">
+    <div class="card" id="wx-card" style="display:none">
       <div class="lbl"><i class="ti ti-cloud"></i> 今日の天気</div>
-      <div class="weather-row">
+      <div class="w-grid">
         <div class="wcard"><div class="wval" id="w-temp">--</div><div class="wlbl">気温 °C</div></div>
         <div class="wcard"><div class="wval" id="w-humid">--</div><div class="wlbl">湿度 %</div></div>
-      </div>
-      <div class="weather-row" style="margin-top:8px">
         <div class="wcard"><div class="wval" id="w-rain">--</div><div class="wlbl">降水 mm</div></div>
         <div class="wcard"><div class="wval" id="w-uv">--</div><div class="wlbl">UV指数</div></div>
       </div>
-      <div style="margin-top:12px">
+      <div style="margin-top:10px">
         <div class="lbl">7日間の降水予報</div>
         <div class="fc-bars" id="fc-bars"></div>
         <div class="fc-lbls" id="fc-lbls"></div>
       </div>
     </div>
 
-    <div class="card" id="advice-card" style="display:none">
-      <div class="lbl"><i class="ti ti-bulb"></i> 今日やること</div>
-      <div id="advice-body"><div style="font-size:13px;color:#888">読み込み中...</div></div>
+    <div class="card" id="adv-card" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="lbl" style="margin:0"><i class="ti ti-bulb"></i> 今日やること</div>
+        <button class="btn btn-sm" onclick="getHomeAdvice()"><i class="ti ti-refresh"></i> 更新</button>
+      </div>
+      <div id="adv-body" style="font-size:13px;color:#888">読み込み中...</div>
     </div>
 
     <div class="card">
-      <div class="lbl"><i class="ti ti-pencil"></i> 今日の一言メモ</div>
-      <textarea id="quick-memo" placeholder="気になることを一言だけ…" style="height:60px"></textarea>
-      <button class="primary-btn" style="margin-top:8px" onclick="saveQuickMemo()">
-        <i class="ti ti-check"></i>　記録する
-      </button>
-      <div id="quick-result"></div>
+      <div class="lbl"><i class="ti ti-pencil"></i> 一言メモ</div>
+      <textarea id="quick-memo" placeholder="気になることを一言だけ…" style="height:56px"></textarea>
+      <button class="btn btn-block btn-green" style="margin-top:8px" onclick="saveQuickMemo()"><i class="ti ti-check"></i> 記録する</button>
+      <div id="quick-res"></div>
     </div>
   </div>
 
   <!-- 記録 -->
   <div id="tab-record" class="screen">
     <div class="card">
-      <div class="lbl">写真を撮る・選ぶ</div>
+      <div class="lbl">写真（任意）</div>
       <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-in').click()">
-        <i class="ti ti-camera" style="font-size:32px;color:#888"></i>
-        <div style="font-size:14px;font-weight:500;color:#1a1a1a;margin-top:8px">タップして写真を追加</div>
-        <div style="font-size:12px;color:#888;margin-top:4px">JPG / PNG</div>
+        <i class="ti ti-camera" style="font-size:28px;color:#aaa"></i>
+        <div style="font-size:14px;font-weight:500;margin-top:6px">タップして写真を追加</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">JPG / PNG</div>
         <input id="file-in" type="file" accept="image/*" style="display:none" onchange="handlePhoto(event)">
       </div>
       <div id="photo-preview" style="display:none;margin-top:10px">
         <img id="preview-img" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover">
-        <div style="font-size:12px;color:#888;margin-top:6px;text-align:center"><i class="ti ti-check"></i> 写真を読み込みました</div>
+        <button class="btn btn-sm btn-danger" style="margin-top:6px" onclick="clearPhoto()"><i class="ti ti-x"></i> 削除</button>
       </div>
     </div>
     <div class="card">
-      <div class="lbl">今日の状況</div>
-      <textarea id="rec-memo" placeholder="気になること、困っていること…例：葉が黄色くなってきた、雑草がすごい" style="height:80px"></textarea>
+      <div class="lbl">今日の状況・困っていること</div>
+      <textarea id="rec-memo" placeholder="例：葉が黄色い、雑草がすごい、虫がついている" style="height:80px"></textarea>
     </div>
     <div class="card">
-      <div class="lbl">育てているもの（任意）</div>
-      <input type="text" id="rec-crops" placeholder="例：トマト、ナス、まだ何も植えていない">
+      <div class="lbl">今日の作業（任意）</div>
+      <input type="text" id="rec-work" placeholder="例：水やり、草取り、追肥">
     </div>
-    <button class="primary-btn green" id="rec-btn" onclick="saveRecord()">
-      <i class="ti ti-sparkles"></i>　記録してAIアドバイスをもらう
+    <button class="btn btn-block btn-green" id="rec-btn" onclick="saveRecord()">
+      <i class="ti ti-sparkles"></i> 記録してAIアドバイスをもらう
     </button>
     <div id="rec-result" style="display:none;margin-top:1rem">
       <div class="card">
-        <div class="lbl"><i class="ti ti-clipboard-list"></i> AIからのアドバイス</div>
-        <div id="rec-result-body" style="font-size:14px;color:#1a1a1a;line-height:1.75"></div>
+        <div class="lbl"><i class="ti ti-clipboard-list"></i> AIアドバイス</div>
+        <div id="rec-result-body" style="font-size:14px;line-height:1.75"></div>
       </div>
     </div>
-    <div id="rec-error" style="display:none" class="error-msg"></div>
+    <div id="rec-err" style="display:none" class="msg-err"></div>
+  </div>
+
+  <!-- 畑マップ -->
+  <div id="tab-map" class="screen">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="sec-title" style="margin:0">畑マップ</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm btn-green" onclick="saveMap()"><i class="ti ti-device-floppy"></i> 保存</button>
+          <button class="btn btn-sm" onclick="checkRotation()"><i class="ti ti-stethoscope"></i> 診断</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#888;margin-bottom:4px">区画をタップして作物を登録</div>
+      <div id="map-grid"></div>
+      <div class="map-legend" id="map-legend"></div>
+    </div>
+
+    <div class="card" id="rot-card" style="display:none">
+      <div class="lbl"><i class="ti ti-stethoscope"></i> 連作・相性チェック</div>
+      <div id="rot-body"></div>
+    </div>
+
+    <div class="card">
+      <div class="lbl"><i class="ti ti-history"></i> 図面の保存履歴</div>
+      <div id="map-hist"></div>
+    </div>
+
+    <div class="crop-picker" id="crop-picker">
+      <div style="font-size:11px;color:#888;padding:4px 12px 6px">作物を選ぶ</div>
+      <div class="crop-opt" onclick="setCrop('🍅','トマト','#FFE4E1')">🍅 トマト</div>
+      <div class="crop-opt" onclick="setCrop('🍆','ナス','#EDD5F5')">🍆 ナス</div>
+      <div class="crop-opt" onclick="setCrop('🥒','キュウリ','#D5F5DA')">🥒 キュウリ</div>
+      <div class="crop-opt" onclick="setCrop('🌽','トウモロコシ','#FFF8D5')">🌽 トウモロコシ</div>
+      <div class="crop-opt" onclick="setCrop('🥬','レタス','#D5EFF5')">🥬 レタス</div>
+      <div class="crop-opt" onclick="setCrop('🧅','玉ねぎ','#FFF0D5')">🧅 玉ねぎ</div>
+      <div class="crop-opt" onclick="setCrop('🥕','にんじん','#FFE8D5')">🥕 にんじん</div>
+      <div class="crop-opt" onclick="setCrop('🌿','ハーブ','#D5F5E8')">🌿 ハーブ</div>
+      <div class="crop-opt" onclick="setCrop('🫛','枝豆','#D5F5DA')">🫛 枝豆</div>
+      <div class="crop-opt" onclick="setCrop('🍠','さつまいも','#FFE0C8')">🍠 さつまいも</div>
+      <div class="crop-opt" onclick="setCrop('🌱','アスパラ','#E8F5D5')">🌱 アスパラ</div>
+      <div class="crop-opt" onclick="setCrop('🟫','未使用','#F0EDE8')">🟫 未使用</div>
+      <div class="crop-opt" onclick="clearCell()">✕ クリア</div>
+    </div>
   </div>
 
   <!-- 履歴 -->
   <div id="tab-log" class="screen">
     <div class="card">
       <div class="lbl"><i class="ti ti-history"></i> 記録履歴</div>
-      <div id="log-body">
-        <div style="font-size:13px;color:#888;padding:1rem 0;text-align:center">読み込み中...</div>
-      </div>
+      <div id="log-body"><div style="font-size:13px;color:#888;padding:1rem 0;text-align:center">読み込み中...</div></div>
     </div>
   </div>
 
-  <!-- 相談 -->
-  <div id="tab-chat" class="screen">
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="padding:10px 14px;border-bottom:1px solid #f0f0eb">
-        <div style="font-size:13px;font-weight:500;color:#1a1a1a">農業AIに何でも相談</div>
-        <div style="font-size:11px;color:#888">天気・記録情報を踏まえて答えます</div>
-      </div>
-      <div style="padding:12px">
-        <div class="chat-wrap" id="chat-area"></div>
-        <div class="quick-row">
-          <button class="qbtn" onclick="qsend('雑草は今抜くべき？')">雑草どうする？</button>
-          <button class="qbtn" onclick="qsend('今から植えられるものは？')">何を植える？</button>
-          <button class="qbtn" onclick="qsend('水やりの頻度は？')">水やり頻度</button>
-          <button class="qbtn" onclick="qsend('肥料のタイミングは？')">肥料のタイミング</button>
+  <!-- 設定 -->
+  <div id="tab-settings" class="screen">
+    <div class="card">
+      <div class="sec-title">アカウント</div>
+      <div class="set-row">
+        <div>
+          <div style="font-size:14px;font-weight:500" id="set-name">-</div>
+          <div style="font-size:12px;color:#888" id="set-email">-</div>
         </div>
-        <div class="send-row">
-          <input type="text" id="chat-in" placeholder="質問を入力..." onkeydown="if(event.key==='Enter')sendChat()">
-          <button onclick="sendChat()">送信 ↗</button>
-        </div>
+        <button class="btn btn-sm btn-danger" onclick="logout()"><i class="ti ti-logout"></i> ログアウト</button>
       </div>
     </div>
+
+    <div class="card">
+      <div class="sec-title">AI設定</div>
+      <div style="margin-bottom:12px">
+        <div class="lbl">AIプロバイダー</div>
+        <select id="api-provider" onchange="updateProviderHint()">
+          <option value="claude">Claude (Anthropic) — 高精度</option>
+          <option value="openai">ChatGPT (OpenAI)</option>
+          <option value="gemini">Gemini (Google) — 無料枠あり</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="lbl" id="key-lbl">APIキー</div>
+        <div style="display:flex;gap:8px">
+          <input type="password" id="api-key" placeholder="APIキーを入力...">
+          <button class="btn btn-sm" onclick="toggleKey()"><i class="ti ti-eye" id="eye-ico"></i></button>
+        </div>
+        <div style="font-size:11px;color:#888;margin-top:4px" id="key-hint"></div>
+      </div>
+      <button class="btn btn-block btn-green" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> 保存</button>
+      <div id="set-res"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">畑のサイズ設定</div>
+      <div class="set-row">
+        <div><div style="font-size:14px">横の区画数（列）</div></div>
+        <input type="text" id="field-cols" value="5" style="width:70px;text-align:center">
+      </div>
+      <div class="set-row">
+        <div><div style="font-size:14px">縦の区画数（行）</div></div>
+        <input type="text" id="field-rows" value="4" style="width:70px;text-align:center">
+      </div>
+      <button class="btn btn-block" style="margin-top:10px" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> 保存</button>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><i class="ti ti-shopping-cart"></i> おすすめ資材</div>
+      <div style="font-size:13px;color:#888;margin-bottom:10px">畑の作物に合わせたおすすめ肥料・資材をAIが提案します</div>
+      <button class="btn btn-block" onclick="getRecommendations()"><i class="ti ti-sparkles"></i> おすすめを見る</button>
+      <div id="rec-items" style="margin-top:10px"></div>
+    </div>
   </div>
+
+</div>
 </div>
 
 <script>
 // ============================================================
-// ここを自分の情報に書き換える（2箇所だけ）
+// ↓ここを自分のSupabase情報に書き換える（2箇所だけ）
 const SUPABASE_URL = 'https://ejqksenzfqyjjviwnsid.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqcWtzZW56ZnF5amp2aXduc2lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MzU3NDAsImV4cCI6MjA5NDMxMTc0MH0.WsVnVHZkxoR_9l_0qSq33ib0d1uFot3T4byDl9Lsy-4';
+// ↑書き換えここまで
 // ============================================================
 
-const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+let user = null;
+let settings = {};
 let wx = null;
-let selectedLoc = JSON.parse(localStorage.getItem('hatake-loc') || 'null');
+let loc = null;
+let gridData = {};
 let chatHistory = [];
 let photoB64 = null;
+let selCell = null;
+let mapHistData = [];
 
-// 起動時に場所が保存されていたら自動で天気取得
-window.addEventListener('load', () => {
-  if (selectedLoc) {
-    showLocBadge();
-    fetchWeather();
-  }
+// 連作・相性DB
+const ROTATION = {
+  'トマト':    { family:'ナス科', bad:['トマト','ナス','キュウリ'], years:3, note:'' },
+  'ナス':      { family:'ナス科', bad:['ナス','トマト','キュウリ'], years:3, note:'' },
+  'キュウリ':  { family:'ウリ科', bad:['キュウリ','スイカ','メロン'], years:2, note:'' },
+  'トウモロコシ':{ family:'イネ科', bad:['トウモロコシ'], years:1, note:'' },
+  'レタス':    { family:'キク科', bad:['レタス'], years:1, note:'' },
+  '玉ねぎ':   { family:'ヒガンバナ科', bad:['玉ねぎ','ニンニク'], years:1, note:'' },
+  'にんじん':  { family:'セリ科', bad:['にんじん'], years:3, note:'' },
+  '枝豆':     { family:'マメ科', bad:['枝豆'], years:1, note:'' },
+  'さつまいも':{ family:'ヒルガオ科', bad:['さつまいも'], years:4, note:'' },
+  'アスパラ':  { family:'キジカクシ科', bad:[], years:0, note:'多年草。植えたら動かさない。毎年広がるため周囲に余裕を。' },
+};
+
+// ===== 初期化 =====
+window.addEventListener('load', async () => {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (session) { user = session.user; showApp(); }
+  else { showLogin(); }
+  sb.auth.onAuthStateChange((ev, session) => {
+    if (ev === 'SIGNED_IN' && session) { user = session.user; showApp(); }
+    else if (ev === 'SIGNED_OUT') { user = null; showLogin(); }
+  });
 });
 
-// ===== タブ切り替え =====
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('main-app').style.display = 'none';
+}
+
+async function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  await loadSettings();
+  updateHeader();
+  checkApiKey();
+  if (settings.lat && settings.lon) {
+    loc = { name: settings.location_name, lat: settings.lat, lon: settings.lon };
+    showSavedLoc();
+    fetchWeather();
+  }
+}
+
+async function loginGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href }
+  });
+  if (error) {
+    document.getElementById('login-err').textContent = 'ログイン失敗: ' + error.message;
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+
+async function logout() {
+  if (confirm('ログアウトしますか？')) await sb.auth.signOut();
+}
+
+function updateHeader() {
+  if (!user) return;
+  const name = user.user_metadata?.full_name || user.email || 'ユーザー';
+  const av = user.user_metadata?.avatar_url;
+  document.getElementById('hdr-name').textContent = name;
+  document.getElementById('set-name').textContent = name;
+  document.getElementById('set-email').textContent = user.email || '';
+  if (av) document.getElementById('avatar').innerHTML = `<img src="${av}">`;
+}
+
+// ===== 設定 =====
+async function loadSettings() {
+  const { data } = await sb.from('user_settings').select('*').eq('id', user.id).single();
+  if (data) {
+    settings = data;
+    document.getElementById('api-provider').value = data.api_provider || 'claude';
+    document.getElementById('api-key').value = data.api_key || '';
+    document.getElementById('field-cols').value = data.field_width || 5;
+    document.getElementById('field-rows').value = data.field_height || 4;
+    updateProviderHint();
+  }
+}
+
+async function saveSettings() {
+  const payload = {
+    id: user.id,
+    api_provider: document.getElementById('api-provider').value,
+    api_key: document.getElementById('api-key').value.trim(),
+    field_width: parseInt(document.getElementById('field-cols').value) || 5,
+    field_height: parseInt(document.getElementById('field-rows').value) || 4,
+    location_name: settings.location_name || '',
+    lat: settings.lat || '',
+    lon: settings.lon || '',
+    updated_at: new Date().toISOString()
+  };
+  const { error } = await sb.from('user_settings').upsert(payload);
+  const el = document.getElementById('set-res');
+  if (error) { el.innerHTML = '<div class="msg-err">保存に失敗しました</div>'; }
+  else {
+    settings = { ...settings, ...payload };
+    el.innerHTML = '<div class="msg-ok">保存しました！</div>';
+    setTimeout(() => el.innerHTML = '', 2000);
+    checkApiKey();
+  }
+}
+
+function checkApiKey() {
+  const has = settings.api_key && settings.api_key.length > 10;
+  document.getElementById('no-key-banner').style.display = has ? 'none' : 'block';
+}
+
+function updateProviderHint() {
+  const hints = {
+    claude: 'console.anthropic.com → API Keys から取得（有料）',
+    openai: 'platform.openai.com → API Keys から取得（有料）',
+    gemini: 'aistudio.google.com → Get API Key から取得（無料枠あり、おすすめ）'
+  };
+  document.getElementById('key-hint').textContent = hints[document.getElementById('api-provider').value] || '';
+}
+
+function toggleKey() {
+  const inp = document.getElementById('api-key');
+  const ico = document.getElementById('eye-ico');
+  if (inp.type === 'password') { inp.type = 'text'; ico.className = 'ti ti-eye-off'; }
+  else { inp.type = 'password'; ico.className = 'ti ti-eye'; }
+}
+
+// ===== タブ =====
 function gotoTab(t, el) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + t).classList.add('active');
-  el.classList.add('active');
+  if (el) el.classList.add('active');
   if (t === 'log') loadLog();
-  if (t === 'chat' && chatHistory.length === 0) initChat();
+  if (t === 'map') { buildGrid(); loadMapHist(); }
+  if (t === 'settings') loadSettings();
 }
 
 // ===== 場所検索 =====
-async function searchLocation() {
-  const q = document.getElementById('loc-input').value.trim();
+async function searchLoc() {
+  const q = document.getElementById('loc-q').value.trim();
   if (!q) return;
-  const status = document.getElementById('loc-status');
-  status.textContent = '検索中...';
-  document.getElementById('loc-suggestions').style.display = 'none';
+  const st = document.getElementById('loc-status');
+  st.textContent = '検索中...';
+  document.getElementById('loc-sugs').style.display = 'none';
   try {
-    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=ja&format=json`);
+    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=en&format=json`);
     const data = await res.json();
-    if (!data.results || !data.results.length) {
-      status.textContent = '見つかりませんでした。別のキーワードで試してください。';
+    if (!data.results?.length) {
+      st.textContent = '見つかりませんでした。英語表記（例: Setagaya Tokyo）で試してください。';
       return;
     }
-    status.textContent = '';
+    st.textContent = '';
     window._geo = data.results;
-    const sug = document.getElementById('loc-suggestions');
-    sug.innerHTML = data.results.map((r, i) =>
-      `<div class="suggestion" onclick="selectLocation(${i})">
+    const el = document.getElementById('loc-sugs');
+    el.innerHTML = data.results.map((r, i) =>
+      `<div class="suggestion" onclick="selectLoc(${i})">
         <strong>${r.name}</strong>
         <span style="color:#888;font-size:12px;margin-left:6px">${[r.admin1, r.country].filter(Boolean).join(' / ')}</span>
       </div>`
     ).join('');
-    sug.style.display = 'block';
-  } catch(e) {
-    status.textContent = '検索に失敗しました。';
-  }
+    el.style.display = 'block';
+  } catch(e) { st.textContent = '検索に失敗しました。'; }
 }
 
-function selectLocation(i) {
+async function selectLoc(i) {
   const r = window._geo[i];
-  selectedLoc = { name: r.name, admin: r.admin1 || '', lat: r.latitude.toFixed(4), lon: r.longitude.toFixed(4) };
-  localStorage.setItem('hatake-loc', JSON.stringify(selectedLoc));
-  document.getElementById('loc-suggestions').style.display = 'none';
-  document.getElementById('loc-input').value = '';
+  loc = { name: r.name, admin: r.admin1 || '', lat: r.latitude.toFixed(4), lon: r.longitude.toFixed(4) };
+  document.getElementById('loc-sugs').style.display = 'none';
+  document.getElementById('loc-q').value = '';
   document.getElementById('loc-status').textContent = '';
-  showLocBadge();
+  settings.location_name = r.name;
+  settings.lat = loc.lat;
+  settings.lon = loc.lon;
+  await sb.from('user_settings').upsert({ id: user.id, ...settings, updated_at: new Date().toISOString() });
+  showSavedLoc();
   fetchWeather();
 }
 
-function showLocBadge() {
-  document.getElementById('loc-name-disp').textContent = [selectedLoc.name, selectedLoc.admin].filter(Boolean).join('、');
-  document.getElementById('loc-coord-disp').textContent = `緯度 ${selectedLoc.lat} / 経度 ${selectedLoc.lon}`;
-  document.getElementById('loc-badge').style.display = 'flex';
+function showSavedLoc() {
+  document.getElementById('loc-saved').style.display = 'block';
+  document.getElementById('loc-input-wrap').style.display = 'none';
+  document.getElementById('loc-name-disp').textContent = [loc.name, loc.admin].filter(Boolean).join('、');
+  document.getElementById('loc-coord-disp').textContent = `緯度 ${loc.lat} / 経度 ${loc.lon}`;
 }
 
-function clearLocation() {
-  selectedLoc = null;
-  wx = null;
-  localStorage.removeItem('hatake-loc');
-  document.getElementById('loc-badge').style.display = 'none';
-  document.getElementById('weather-card').style.display = 'none';
-  document.getElementById('advice-card').style.display = 'none';
+function showLocInput() {
+  document.getElementById('loc-saved').style.display = 'none';
+  document.getElementById('loc-input-wrap').style.display = 'block';
 }
 
-// ===== 天気取得 =====
+// ===== 天気 =====
 async function fetchWeather() {
-  if (!selectedLoc) return;
+  if (!loc) return;
   try {
-    const { lat, lon } = selectedLoc;
-    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,uv_index&daily=precipitation_sum&forecast_days=7&timezone=Asia%2FTokyo`);
-    const data = await res.json();
-    wx = data;
-    const c = data.current;
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,precipitation,uv_index&daily=precipitation_sum&forecast_days=7&timezone=Asia%2FTokyo`);
+    wx = await res.json();
+    const c = wx.current;
     document.getElementById('w-temp').textContent = Math.round(c.temperature_2m);
     document.getElementById('w-humid').textContent = Math.round(c.relative_humidity_2m);
     document.getElementById('w-rain').textContent = c.precipitation.toFixed(1);
     document.getElementById('w-uv').textContent = Math.round(c.uv_index);
-    // 予報バー
-    const daily = data.daily;
+    const daily = wx.daily;
     const maxR = Math.max(...daily.precipitation_sum, 1);
     const days = ['日','月','火','水','木','金','土'];
-    const barsEl = document.getElementById('fc-bars');
-    const lblsEl = document.getElementById('fc-lbls');
-    barsEl.innerHTML = ''; lblsEl.innerHTML = '';
-    daily.precipitation_sum.forEach((r, i) => {
-      const h = Math.max(6, Math.round((r / maxR) * 52));
+    document.getElementById('fc-bars').innerHTML = daily.precipitation_sum.map((r,i) => {
+      const h = Math.max(6, Math.round((r/maxR)*52));
       const col = r > 5 ? '#378ADD' : r > 1 ? '#85B7EB' : '#e8e8e3';
-      const border = r <= 1 ? 'border:1px solid #d5d5d0;' : '';
-      barsEl.innerHTML += `<div style="flex:1;background:${col};border-radius:3px 3px 0 0;height:${h}px;${border}" title="${r.toFixed(1)}mm"></div>`;
-      const d = new Date(daily.time[i]);
-      lblsEl.innerHTML += `<div style="flex:1;text-align:center;font-size:10px;color:#888">${days[d.getDay()]}</div>`;
-    });
-    document.getElementById('weather-card').style.display = 'block';
-    getAIAdvice();
+      return `<div style="flex:1;background:${col};border-radius:3px 3px 0 0;height:${h}px${r<=1?';border:1px solid #d5d5d0':''}" title="${r.toFixed(1)}mm"></div>`;
+    }).join('');
+    document.getElementById('fc-lbls').innerHTML = daily.time.map((t,i) => {
+      return `<div style="flex:1;text-align:center;font-size:10px;color:#888">${days[new Date(t).getDay()]}</div>`;
+    }).join('');
+    document.getElementById('wx-card').style.display = 'block';
+    if (settings.api_key) getHomeAdvice();
   } catch(e) {}
 }
 
-// ===== ホームのAIアドバイス =====
-async function getAIAdvice() {
-  document.getElementById('advice-card').style.display = 'block';
+// ===== AI共通 =====
+async function callAI(prompt, sys, imgB64) {
+  const provider = settings.api_provider || 'claude';
+  const key = settings.api_key;
+  if (!key) throw new Error('APIキーが設定されていません。「設定」タブで入力してください。');
+
+  if (provider === 'claude') {
+    const msgs = imgB64
+      ? [{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:imgB64}},{type:'text',text:prompt}]}]
+      : [{role:'user',content:prompt}];
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
+      body:JSON.stringify({model:'claude-opus-4-5',max_tokens:1000,system:sys,messages:msgs})
+    });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error.message);
+    return d.content[0].text;
+
+  } else if (provider === 'openai') {
+    const content = imgB64
+      ? [{type:'text',text:prompt},{type:'image_url',image_url:{url:`data:image/jpeg;base64,${imgB64}`}}]
+      : prompt;
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+      body:JSON.stringify({model:'gpt-4o',max_tokens:1000,messages:[{role:'system',content:sys},{role:'user',content}]})
+    });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error.message);
+    return d.choices[0].message.content;
+
+  } else {
+    const parts = imgB64
+      ? [{text:prompt},{inline_data:{mime_type:'image/jpeg',data:imgB64}}]
+      : [{text:prompt}];
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts}],systemInstruction:{parts:[{text:sys}]}})
+    });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error.message);
+    return d.candidates[0].content.parts[0].text;
+  }
+}
+
+// ===== ホームAIアドバイス =====
+async function getHomeAdvice() {
+  if (!wx || !settings.api_key) return;
+  document.getElementById('adv-card').style.display = 'block';
+  document.getElementById('adv-body').textContent = '読み込み中...';
   const c = wx.current;
-  const today = new Date().toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'});
-  const locName = selectedLoc ? `${selectedLoc.name}${selectedLoc.admin ? '（'+selectedLoc.admin+'）' : ''}` : '';
-  const prompt = `今日は${today}。場所：${locName}。気温${Math.round(c.temperature_2m)}°C、湿度${Math.round(c.relative_humidity_2m)}%、降水${c.precipitation}mm。家庭菜園（約100平方メートル）の初心者向けに、今日やるべき作業を優先順位つきで3つ教えてください。各項目：作業名（10字以内）と理由（1〜2文）。フォーマット：1. [作業名] — [理由]`;
+  const today = new Date().toLocaleDateString('ja-JP', {month:'long',day:'numeric',weekday:'short'});
+  const crops = [...new Set(Object.values(gridData).map(d=>d.name).filter(Boolean))];
+  const prompt = `今日は${today}。場所:${loc?.name||'不明'}。気温${Math.round(c.temperature_2m)}°C、湿度${Math.round(c.relative_humidity_2m)}%、降水${c.precipitation}mm。${crops.length?'畑の作物:'+crops.join('、')+'。':''}家庭菜園（約100平方メートル）の初心者向けに今日やるべき作業を優先順位つきで3つ。フォーマット: 1. [作業名] — [理由1〜2文]`;
   try {
-    const res = await fetch(ANTHROPIC_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:500, system:'家庭菜園の専門家。初心者向けに具体的で実践的なアドバイスを日本語で。', messages:[{role:'user',content:prompt}] })
-    });
-    const data = await res.json();
-    const text = data.content[0].text;
-    const lines = text.split('\n').filter(l => l.trim());
-    let html = '';
-    lines.forEach((l, i) => {
-      const clean = l.replace(/^\d+\.\s*/, '');
+    const text = await callAI(prompt, '家庭菜園の専門家。初心者向けに具体的なアドバイスを日本語で。');
+    const lines = text.split('\n').filter(l=>l.trim());
+    document.getElementById('adv-body').innerHTML = lines.map((l,i) => {
+      const clean = l.replace(/^\d+\.\s*/,'');
       const parts = clean.split(/\s*[—\-–]\s*/);
-      html += `<div class="advice-item"><div class="num">${i+1}</div><div><div style="font-size:14px;font-weight:500">${parts[0]||''}</div>${parts[1]?`<div style="font-size:13px;color:#666;margin-top:3px">${parts[1]}</div>`:''}</div></div>`;
-    });
-    document.getElementById('advice-body').innerHTML = html;
+      return `<div class="adv-item"><div class="num">${i+1}</div><div><div style="font-size:14px;font-weight:500">${parts[0]||''}</div>${parts[1]?`<div style="font-size:13px;color:#666;margin-top:3px">${parts[1]}</div>`:''}</div></div>`;
+    }).join('');
   } catch(e) {
-    document.getElementById('advice-body').innerHTML = '<div style="font-size:13px;color:#888">アドバイスの取得に失敗しました</div>';
+    document.getElementById('adv-body').innerHTML = `<div style="color:#c00;font-size:13px">エラー: ${e.message}</div>`;
   }
 }
 
@@ -402,167 +694,255 @@ function handlePhoto(e) {
   reader.readAsDataURL(file);
 }
 
-// ===== 記録保存（Supabase） =====
+function clearPhoto() {
+  photoB64 = null;
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('upload-zone').style.display = 'block';
+  document.getElementById('file-in').value = '';
+}
+
+// ===== 記録保存 =====
 async function saveRecord() {
   const memo = document.getElementById('rec-memo').value.trim();
-  const crops = document.getElementById('rec-crops').value.trim();
+  const work = document.getElementById('rec-work').value.trim();
   const btn = document.getElementById('rec-btn');
-  const errEl = document.getElementById('rec-error');
+  const errEl = document.getElementById('rec-err');
   errEl.style.display = 'none';
   btn.disabled = true;
-  btn.textContent = 'AI分析中...';
-
-  const today = new Date().toLocaleDateString('ja-JP', {month:'long', day:'numeric'});
+  btn.innerHTML = '<i class="ti ti-loader"></i> AI分析中...';
+  const today = new Date().toLocaleDateString('ja-JP', {month:'long',day:'numeric'});
   const wxInfo = wx ? `気温${Math.round(wx.current.temperature_2m)}°C、湿度${Math.round(wx.current.relative_humidity_2m)}%、降水${wx.current.precipitation}mm。` : '';
-  const locInfo = selectedLoc ? `場所：${selectedLoc.name}。` : '';
-  const prompt = `${today}の畑の状況です。${locInfo}${wxInfo}作物：${crops||'不明'}。状況：${memo||'特になし'}。${photoB64?'写真あり。':''}家庭菜園初心者向けに今週やるべきことを3〜5つ、理由つきで教えてください。`;
-  const messages = photoB64
-    ? [{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:photoB64}},{type:'text',text:prompt}]}]
-    : [{role:'user',content:prompt}];
-
+  const crops = [...new Set(Object.values(gridData).map(d=>d.name).filter(Boolean))];
+  const prompt = `${today}。場所:${loc?.name||'不明'}。${wxInfo}${crops.length?'畑の作物:'+crops.join('、')+'。':''}今日の作業:${work||'なし'}。状況:${memo||'特になし'}。${photoB64?'写真あり。':''}今週やるべきことを3〜5つ、理由と病害虫・連作注意点も含めて教えてください。`;
   try {
-    // AIアドバイス取得
-    const aiRes = await fetch(ANTHROPIC_URL, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:800, system:'家庭菜園の専門家。初心者に寄り添い具体的なアドバイスを日本語で。', messages})
-    });
-    const aiData = await aiRes.json();
-    const advice = aiData.content[0].text;
-
-    // Supabaseに保存
-    const record = {
+    const advice = await callAI(prompt, '家庭菜園の専門家。初心者向けに具体的で実践的なアドバイスを日本語で。', photoB64);
+    await sb.from('records').insert({
+      user_id: user.id,
       date: today,
-      memo: memo || '（メモなし）',
-      crops: crops || '',
-      advice: advice,
-      location_name: selectedLoc ? selectedLoc.name : '',
-      lat: selectedLoc ? selectedLoc.lat : '',
-      lon: selectedLoc ? selectedLoc.lon : ''
-    };
-    await fetch(`${SUPABASE_URL}/rest/v1/records`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify(record)
+      memo: memo || work || '（記録）',
+      crops: crops.join('、'),
+      advice,
+      location_name: loc?.name || '',
+      lat: loc?.lat || '',
+      lon: loc?.lon || ''
     });
-
     document.getElementById('rec-result-body').innerHTML = advice.replace(/\n/g,'<br>');
     document.getElementById('rec-result').style.display = 'block';
   } catch(e) {
-    errEl.textContent = 'エラーが発生しました。もう一度お試しください。';
+    errEl.textContent = 'エラー: ' + e.message;
     errEl.style.display = 'block';
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-sparkles"></i>　記録してAIアドバイスをもらう';
+    btn.innerHTML = '<i class="ti ti-sparkles"></i> 記録してAIアドバイスをもらう';
   }
 }
 
-// ===== クイックメモ保存（Supabase） =====
+// ===== クイックメモ =====
 async function saveQuickMemo() {
   const memo = document.getElementById('quick-memo').value.trim();
   if (!memo) return;
-  const today = new Date().toLocaleDateString('ja-JP', {month:'long', day:'numeric'});
-  const btn = event.currentTarget;
-  btn.disabled = true;
+  const today = new Date().toLocaleDateString('ja-JP', {month:'long',day:'numeric'});
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/records`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({ date: today, memo, location_name: selectedLoc ? selectedLoc.name : '' })
-    });
+    await sb.from('records').insert({ user_id: user.id, date: today, memo, location_name: loc?.name||'' });
     document.getElementById('quick-memo').value = '';
-    document.getElementById('quick-result').innerHTML = '<div class="success-msg">記録しました！</div>';
-    setTimeout(() => { document.getElementById('quick-result').innerHTML = ''; }, 2000);
+    document.getElementById('quick-res').innerHTML = '<div class="msg-ok">記録しました！</div>';
+    setTimeout(() => document.getElementById('quick-res').innerHTML = '', 2000);
   } catch(e) {
-    document.getElementById('quick-result').innerHTML = '<div class="error-msg">保存に失敗しました</div>';
-  } finally {
-    btn.disabled = false;
+    document.getElementById('quick-res').innerHTML = '<div class="msg-err">保存に失敗しました</div>';
   }
 }
 
-// ===== 履歴読み込み（Supabase） =====
+// ===== 履歴 =====
 async function loadLog() {
   const el = document.getElementById('log-body');
-  el.innerHTML = '<div style="font-size:13px;color:#888;padding:1rem 0;text-align:center">読み込み中...</div>';
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/records?order=created_at.desc&limit=30`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-    });
-    const logs = await res.json();
-    if (!logs.length) {
-      el.innerHTML = '<div style="font-size:13px;color:#888;padding:1rem 0;text-align:center">まだ記録がありません<br>「記録」タブから始めましょう</div>';
+    const { data } = await sb.from('records').select('*').eq('user_id', user.id).order('created_at',{ascending:false}).limit(30);
+    if (!data?.length) {
+      el.innerHTML = '<div style="font-size:13px;color:#888;padding:1rem 0;text-align:center">まだ記録がありません</div>';
       return;
     }
-    el.innerHTML = logs.map(l => `
+    el.innerHTML = data.map(l => `
       <div class="log-item">
-        <div class="log-thumb"><i class="ti ti-plant-2" style="font-size:20px;color:#aaa"></i></div>
+        <div class="log-thumb"><i class="ti ti-plant-2" style="font-size:18px;color:#aaa"></i></div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:12px;color:#888;margin-bottom:2px">${l.date}${l.location_name ? ' · '+l.location_name : ''}</div>
-          <div style="font-size:14px;font-weight:500;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.memo}</div>
-          ${l.crops ? `<div style="font-size:12px;color:#888;margin-top:2px">${l.crops}</div>` : ''}
-          ${l.advice ? `<div style="font-size:12px;color:#888;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">AI: ${l.advice.slice(0,60)}...</div>` : ''}
+          <div style="font-size:11px;color:#888;margin-bottom:2px">${l.date}${l.location_name?' · '+l.location_name:''}</div>
+          <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.memo||''}</div>
+          ${l.crops?`<div style="font-size:12px;color:#888;margin-top:2px">${l.crops}</div>`:''}
+          ${l.advice?`<div style="font-size:12px;color:#888;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">AI: ${l.advice.slice(0,60)}...</div>`:''}
         </div>
-      </div>
-    `).join('');
+      </div>`).join('');
   } catch(e) {
-    el.innerHTML = '<div style="font-size:13px;color:#c00;padding:1rem 0;text-align:center">履歴の取得に失敗しました</div>';
+    el.innerHTML = '<div style="font-size:13px;color:#c00;text-align:center;padding:1rem">取得に失敗しました</div>';
   }
 }
 
-// ===== チャット =====
-function initChat() {
-  const msg = 'こんにちは！畑のことなら何でも聞いてください。天気データや記録情報があれば一緒に考えます。';
-  addBubble('ai', msg);
-  chatHistory.push({role:'assistant', content:msg});
+// ===== 畑マップ =====
+function buildGrid() {
+  const rows = parseInt(document.getElementById('field-rows')?.value) || settings.field_height || 4;
+  const cols = parseInt(document.getElementById('field-cols')?.value) || settings.field_width || 5;
+  const grid = document.getElementById('map-grid');
+  if (!grid) return;
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.innerHTML = '';
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const key = `${r}-${c}`;
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (gridData[key] ? ' planted' : '');
+      cell.id = 'cell-' + key;
+      if (gridData[key]) {
+        cell.style.background = gridData[key].color;
+        cell.style.borderColor = 'transparent';
+        cell.innerHTML = `<span style="font-size:11px">${gridData[key].emoji}<br>${gridData[key].name}</span>`;
+      }
+      cell.onclick = e => openPicker(e, key);
+      grid.appendChild(cell);
+    }
+  }
+  updateLegend();
 }
 
-function addBubble(role, text, muted) {
-  const area = document.getElementById('chat-area');
-  const d = document.createElement('div');
-  d.className = 'bubble ' + role + (muted ? ' muted' : '');
-  d.textContent = text;
-  area.appendChild(d);
-  area.scrollTop = area.scrollHeight;
-  return d;
+function openPicker(e, key) {
+  selCell = key;
+  const picker = document.getElementById('crop-picker');
+  picker.style.display = 'block';
+  const rect = e.target.getBoundingClientRect();
+  picker.style.top = Math.min(rect.bottom + 4, window.innerHeight - 340) + 'px';
+  picker.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 230)) + 'px';
+  e.stopPropagation();
 }
 
-function qsend(t) { document.getElementById('chat-in').value = t; sendChat(); }
+document.addEventListener('click', () => {
+  const p = document.getElementById('crop-picker');
+  if (p) p.style.display = 'none';
+});
 
-async function sendChat() {
-  const inp = document.getElementById('chat-in');
-  const text = inp.value.trim();
-  if (!text) return;
-  inp.value = '';
-  addBubble('user', text);
-  chatHistory.push({role:'user', content:text});
-  const loading = addBubble('ai', '考え中...', true);
-  let ctx = '';
-  if (selectedLoc) ctx += `場所: ${selectedLoc.name}。`;
-  if (wx) { const c = wx.current; ctx += `気温${Math.round(c.temperature_2m)}°C、湿度${Math.round(c.relative_humidity_2m)}%。`; }
-  const sys = `家庭菜園・小規模農業の専門家。初心者に寄り添い実践的なアドバイスを日本語で。${ctx ? '【畑情報】' + ctx : ''}返答は3〜4文で簡潔に。`;
+function setCrop(emoji, name, color) {
+  if (!selCell) return;
+  gridData[selCell] = { emoji, name, color };
+  const cell = document.getElementById('cell-' + selCell);
+  cell.classList.add('planted');
+  cell.style.background = color;
+  cell.style.borderColor = 'transparent';
+  cell.innerHTML = `<span style="font-size:11px">${emoji}<br>${name}</span>`;
+  document.getElementById('crop-picker').style.display = 'none';
+  updateLegend();
+}
+
+function clearCell() {
+  if (!selCell) return;
+  delete gridData[selCell];
+  const cell = document.getElementById('cell-' + selCell);
+  cell.classList.remove('planted');
+  cell.style.background = '';
+  cell.style.borderColor = '';
+  cell.innerHTML = '';
+  document.getElementById('crop-picker').style.display = 'none';
+  updateLegend();
+}
+
+function updateLegend() {
+  const counts = {};
+  Object.values(gridData).forEach(d => { if (d.name) counts[d.emoji+' '+d.name] = (counts[d.emoji+' '+d.name]||0)+1; });
+  document.getElementById('map-legend').innerHTML = Object.entries(counts)
+    .map(([k,v]) => `<div class="leg-item">${k} × ${v}</div>`).join('');
+}
+
+function checkRotation() {
+  const crops = Object.values(gridData).map(d=>d.name).filter(Boolean);
+  const card = document.getElementById('rot-card');
+  const body = document.getElementById('rot-body');
+  card.style.display = 'block';
+  if (!crops.length) {
+    body.innerHTML = '<div style="font-size:13px;color:#888">作物が登録されていません</div>';
+    return;
+  }
+  let html = '';
+  const seen = {};
+  crops.forEach(c => seen[c] = (seen[c]||0)+1);
+  Object.entries(seen).forEach(([crop, count]) => {
+    const rule = ROTATION[crop];
+    if (!rule) return;
+    if (rule.note) html += `<div class="rot-badge warn"><i class="ti ti-info-circle"></i><div><strong>${crop}</strong>: ${rule.note}</div></div>`;
+    if (count > 1) html += `<div class="rot-badge danger"><i class="ti ti-alert-triangle"></i><div><strong>${crop}</strong>が${count}区画あります。同じ作物は連作になるため、来年は別の場所に。</div></div>`;
+    const badOverlap = rule.bad.filter(b => b !== crop && crops.includes(b));
+    if (badOverlap.length) html += `<div class="rot-badge danger"><i class="ti ti-x"></i><div><strong>${crop}</strong>と<strong>${badOverlap.join('・')}</strong>は同じ科（${rule.family}）で相性が悪いです。離して植えましょう。</div></div>`;
+  });
+  if (!html) html = '<div class="rot-badge ok"><i class="ti ti-check"></i><div>現在の配置に問題は見つかりませんでした！</div></div>';
+  body.innerHTML = html;
+}
+
+async function saveMap() {
+  const note = new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric'});
+  const { error } = await sb.from('field_maps').insert({ user_id: user.id, map_data: gridData, note });
+  if (!error) {
+    showMapSaveMsg('マップを保存しました: ' + note);
+    loadMapHist();
+  }
+}
+
+function showMapSaveMsg(msg) {
+  const el = document.getElementById('map-hist');
+  const div = document.createElement('div');
+  div.className = 'msg-ok';
+  div.textContent = msg;
+  el.prepend(div);
+  setTimeout(() => div.remove(), 2500);
+}
+
+async function loadMapHist() {
+  const el = document.getElementById('map-hist');
+  const { data } = await sb.from('field_maps').select('*').eq('user_id', user.id).order('created_at',{ascending:false}).limit(10);
+  mapHistData = data || [];
+  if (!mapHistData.length) {
+    el.innerHTML = '<div style="font-size:13px;color:#888;text-align:center;padding:8px">まだ保存した図面がありません</div>';
+    return;
+  }
+  el.innerHTML = mapHistData.map(m => {
+    const crops = [...new Set(Object.values(m.map_data||{}).map(d=>d.emoji+d.name).filter(Boolean))].slice(0,4);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0eb">
+      <div>
+        <div style="font-size:13px;font-weight:500">${m.note}</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">${crops.join(' ') || '（作物なし）'}</div>
+      </div>
+      <button class="btn btn-sm" onclick="restoreMap(${m.id})">復元</button>
+    </div>`;
+  }).join('');
+}
+
+function restoreMap(id) {
+  const m = mapHistData.find(x => x.id === id);
+  if (!m) return;
+  gridData = m.map_data || {};
+  buildGrid();
+  showMapSaveMsg('図面を復元しました: ' + m.note);
+}
+
+// ===== おすすめ資材 =====
+async function getRecommendations() {
+  if (!settings.api_key) {
+    document.getElementById('rec-items').innerHTML = '<div class="msg-err">先にAPIキーを設定してください</div>';
+    return;
+  }
+  const crops = [...new Set(Object.values(gridData).map(d=>d.name).filter(Boolean))];
+  const el = document.getElementById('rec-items');
+  el.innerHTML = '<div style="font-size:13px;color:#888">AIが考え中...</div>';
+  const prompt = `畑の作物: ${crops.join('、')||'未設定'}。この作物に適したおすすめ肥料・農業資材を3つ提案してください。各項目: [商品名] — [効果・用途] — Amazonキーワード: [検索キーワード]`;
   try {
-    const res = await fetch(ANTHROPIC_URL, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:600, system:sys, messages:chatHistory})
-    });
-    const data = await res.json();
-    const reply = data.content[0].text;
-    loading.textContent = reply;
-    loading.classList.remove('muted');
-    chatHistory.push({role:'assistant', content:reply});
+    const text = await callAI(prompt, '家庭菜園の専門家。具体的な商品名で提案してください。');
+    const lines = text.split('\n').filter(l=>l.trim() && l.includes('—'));
+    el.innerHTML = lines.map(l => {
+      const parts = l.split(/\s*—\s*/);
+      const kw = (parts[2]||'').replace(/Amazonキーワード[:：]/,'').trim();
+      const link = kw ? `https://www.amazon.co.jp/s?k=${encodeURIComponent(kw)}&tag=YOUR_TAG` : '';
+      return `<div style="padding:10px 0;border-bottom:1px solid #f0f0eb">
+        <div style="font-size:14px;font-weight:500">${parts[0]||''}</div>
+        ${parts[1]?`<div style="font-size:13px;color:#666;margin-top:3px">${parts[1]}</div>`:''}
+        ${link?`<a href="${link}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:12px;color:#e47911;text-decoration:none;border:1px solid #e47911;border-radius:6px;padding:4px 10px"><i class="ti ti-shopping-cart"></i> Amazonで見る</a>`:''}
+      </div>`;
+    }).join('') || `<div style="font-size:13px;color:#888">${text}</div>`;
   } catch(e) {
-    loading.textContent = 'エラーが発生しました。もう一度お試しください。';
+    el.innerHTML = `<div class="msg-err">エラー: ${e.message}</div>`;
   }
 }
 </script>
